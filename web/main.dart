@@ -3,17 +3,14 @@
 
 import 'dart:html';
 
-import 'package:http/http.dart' as http;
-import 'package:html/parser.dart' show parse;
+getCardImages() {
+  InputElement url = querySelector("#url").value;
+  HttpRequest.postFormData("/cardimages", {"url": url}).then((HttpRequest response) {
+    print(response);
+  });
 
-// getCardImages(String url) {
-//   HttpRequest.requestCrossOrigin(url).then((HttpRequest response) {
-//     var document = parse(response.body);
-//     var images = document.querySelectorAll(".card_list_box img");
-//   });
-
-//   querySelector('#output').append(images);
-// }
+  // querySelector('#output').append(images);
+}
 
 getPdfFile() {
   print(querySelector("#input-dir").files);
@@ -31,5 +28,6 @@ getPdfFile() {
 void main() {
   querySelector('#output').text = 'Your Dart app is running.';
   querySelector("#input-dir").onChange.listen((e) => getPdfFile());
+  querySelector("#send-url").onClick.listen((e) => getCardImages());
 //   querySelector("#enterUrl").onclick.listen((event) {});
 }
