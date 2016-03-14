@@ -13,13 +13,16 @@
     <meta name="scaffolded-by" content="https://github.com/google/stagehand">
     <title>proxyMaker</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     <script defer src="main.dart" type="application/dart"></script>
     <script defer src="packages/browser/dart.js"></script>
 </head>
 
-<body>
-
-  <div id="output"></div>
-
+<body class="container-fluid">
+    <div class="row">
+        <input class="col-md-4" id="input-dir" type="file">
+        </input>
+        <div id="output" class="col-md-8"></div>
+    </div>
 </body>
 </html>

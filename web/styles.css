@@ -7,3 +7,21 @@ html, body {
     padding: 0;
     font-family: 'Roboto', sans-serif;
 }
+#input-dir {
+  border: 2px dashed #bbb;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  color: #bbb;
+  font-size: 20pt;
+  font-weight: bold;
+  padding: 25px;
+  text-align: center;
+  height: 700px;
+}
+
+#input-dir.hover {
+  background-color: #def;
+  border-color: #777;
+  color: #777;
+}
