@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -58,48 +59,59 @@ func main() {
 			parsedURL, _ := url.Parse(link)
 			values, _ := url.ParseQuery(parsedURL.RawQuery)
 			uid := values.Get("ver")
+			// currentDir, _ := os.Getwd()
+			dir := filepath.Join("static", uid)
 
 			if err != nil {
 				fmt.Println("Nope")
 			}
+			if _, err := os.Stat(dir); os.IsNotExist(err) {
+				os.MkdirAll(dir, 0744)
+				doc.Find(classCSS + " .image img").Each(func(i int, s *goquery.Selection) {
+					wg.Add(1)
+					val, _ := s.Attr("src")
+					big := strings.Replace(val, "90_126", "front", 1)
+					imageURL := yuyuteiURL + big
 
-			doc.Find(classCSS + " .image img").Each(func(i int, s *goquery.Selection) {
-				wg.Add(1)
-				val, _ := s.Attr("src")
-				big := strings.Replace(val, "90_126", "front", 1)
-				imageURL := yuyuteiURL + big
+					go func(url string) {
+						defer wg.Done()
+						// fmt.Println("dir : ", dir)
+						fileName := filepath.Join(dir, path.Base(url))
+						out, err := os.Create(fileName)
+						if err != nil {
+							fmt.Println(err)
+						}
+						defer out.Close()
+						reps, err := http.Get(url)
 
-				go func(url string, dirName string) {
-					defer wg.Done()
-					currentDir, _ := os.Getwd()
+						if err != nil {
+							fmt.Println(err)
+						}
 
-					dir := filepath.Join(currentDir, "static", dirName)
-					// fmt.Println("dir : ", dir)
-					fileName := filepath.Join("static", dirName, path.Base(url))
-					os.MkdirAll(dir, 0744)
-					out, err := os.Create(fileName)
-					if err != nil {
-						fmt.Println(err)
-					}
-					defer out.Close()
-					reps, err := http.Get(url)
+						file, err := io.Copy(out, reps.Body)
+						if err != nil {
+							fmt.Println(err)
+						}
 
-					if err != nil {
-						fmt.Println(err)
-					}
+						fmt.Println("File", file)
+						// fmt.Printf("Link: n-%d __ %v%v\n", i, imageURL, uid)
+						defer reps.Body.Close()
+						// fmt.Println("image url: ", strings.Replace(fileName, "\\", "/", 1))
+						result = append(result, strings.Replace(fileName, "\\", "/", 2))
+					}(imageURL)
+				})
+			} else {
+				files, err := ioutil.ReadDir(dir)
+				if err != nil {
+					fmt.Println(err)
+				}
+				for _, file := range files {
+					absPath := filepath.Join(dir, file.Name())
+					urlPath := strings.Replace(absPath, "\\", "/", 2)
+					result = append(result, urlPath)
+				}
 
-					file, err := io.Copy(out, reps.Body)
-					if err != nil {
-						fmt.Println(err)
-					}
-
-					fmt.Println("File", file)
-					// fmt.Printf("Link: n-%d __ %v%v\n", i, imageURL, uid)
-					defer reps.Body.Close()
-					// fmt.Println("image url: ", strings.Replace(fileName, "\\", "/", 1))
-					result = append(result, strings.Replace(fileName, "\\", "/", 2))
-				}(imageURL, uid)
-			})
+			}
 		}
 
 		wg.Wait()
