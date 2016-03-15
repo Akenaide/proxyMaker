@@ -38,10 +38,9 @@ func (p *Prox) handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// proxy := New("http://localhost:8080")
-	static := http.FileServer(http.Dir("./"))
-
-	http.Handle("/static", http.StripPrefix("/static", static))
+	proxy := New("http://localhost:8080")
+	// static := http.FileServer(http.Dir("./"))
+	http.HandleFunc("/", proxy.handle)
 
 	http.HandleFunc("/cardimages", func(w http.ResponseWriter, r *http.Request) {
 		var wg sync.WaitGroup
@@ -74,8 +73,9 @@ func main() {
 					defer wg.Done()
 					currentDir, _ := os.Getwd()
 
-					dir := filepath.Join(currentDir, dirName)
-					fileName := filepath.Join(dirName, path.Base(url))
+					dir := filepath.Join(currentDir, "static", dirName)
+					// fmt.Println("dir : ", dir)
+					fileName := filepath.Join("static", dirName, path.Base(url))
 					os.MkdirAll(dir, 0744)
 					out, err := os.Create(fileName)
 					if err != nil {
@@ -96,7 +96,8 @@ func main() {
 					fmt.Println("File", file)
 					// fmt.Printf("Link: n-%d __ %v%v\n", i, imageURL, uid)
 					defer reps.Body.Close()
-					result = append(result, fileName)
+					// fmt.Println("image url: ", strings.Replace(fileName, "\\", "/", 1))
+					result = append(result, strings.Replace(fileName, "\\", "/", 2))
 				}(imageURL, uid)
 			})
 		}
@@ -111,7 +112,11 @@ func main() {
 		}
 		w.Write(b)
 	})
-	// http.HandleFunc("/", proxy.handle)
+
+	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
+		// fmt.Println("static", r.URL.Path[1:])
+		http.ServeFile(w, r, r.URL.Path[1:])
+	})
 
 	http.ListenAndServe(":8010", nil)
 }
