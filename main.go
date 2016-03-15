@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"path"
@@ -16,7 +17,30 @@ import (
 
 const yuyuteiURL = "http://yuyu-tei.jp/"
 
+type Prox struct {
+	// target url of reverse proxy
+	target *url.URL
+	// instance of Go ReverseProxy thatwill do the job for us
+	proxy *httputil.ReverseProxy
+}
+
+func New(target string) *Prox {
+	url, _ := url.Parse(target)
+	// you should handle error on parsing
+	return &Prox{target: url, proxy: httputil.NewSingleHostReverseProxy(url)}
+}
+
+func (p *Prox) handle(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("X-GoProxy", "GoProxy")
+	// call to magic method from ReverseProxy object
+	p.proxy.ServeHTTP(w, r)
+}
+
 func main() {
+	proxy := New("http://localhost:8080")
+
+	http.HandleFunc("/", proxy.handle)
+
 	http.HandleFunc("/cardimages", func(w http.ResponseWriter, r *http.Request) {
 		var wg sync.WaitGroup
 
