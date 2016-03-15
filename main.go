@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -37,13 +38,15 @@ func (p *Prox) handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	proxy := New("http://localhost:8080")
+	// proxy := New("http://localhost:8080")
+	static := http.FileServer(http.Dir("./"))
 
-	http.HandleFunc("/", proxy.handle)
+	http.Handle("/static", http.StripPrefix("/static", static))
 
 	http.HandleFunc("/cardimages", func(w http.ResponseWriter, r *http.Request) {
 		var wg sync.WaitGroup
 
+		result := []string{}
 		link := r.PostFormValue("url")
 		classCSS := r.PostFormValue("class_css")
 
@@ -72,9 +75,9 @@ func main() {
 					currentDir, _ := os.Getwd()
 
 					dir := filepath.Join(currentDir, dirName)
-					filePath := filepath.Join(dir, path.Base(url))
+					fileName := filepath.Join(dirName, path.Base(url))
 					os.MkdirAll(dir, 0744)
-					out, err := os.Create(filePath)
+					out, err := os.Create(fileName)
 					if err != nil {
 						fmt.Println(err)
 					}
@@ -93,12 +96,22 @@ func main() {
 					fmt.Println("File", file)
 					// fmt.Printf("Link: n-%d __ %v%v\n", i, imageURL, uid)
 					defer reps.Body.Close()
+					result = append(result, fileName)
 				}(imageURL, uid)
 			})
 		}
 
 		wg.Wait()
 		fmt.Printf("Finish")
+		b, err := json.Marshal(result)
+
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		w.Write(b)
 	})
+	// http.HandleFunc("/", proxy.handle)
+
 	http.ListenAndServe(":8010", nil)
 }
