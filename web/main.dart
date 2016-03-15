@@ -2,11 +2,18 @@
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
 import 'dart:html';
+import 'dart:convert';
 
 getCardImages() {
   InputElement url = querySelector("#url").value;
   HttpRequest.postFormData("/cardimages", {"url": url}).then((HttpRequest response) {
-    print(response);
+    List parsedList = JSON.decode(response.response);
+    var output = querySelector('#output');
+    for (var url in parsedList) {
+      var image = new ImageElement();
+      image.src = url;
+      output.append(image);
+    };
   });
 
   // querySelector('#output').append(images);
