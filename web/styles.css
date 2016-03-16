@@ -31,3 +31,7 @@ html, body {
     margin-left: 3px;
     margin-bottom: 3px;
 }
+
+#output .image {
+    width: 33%;
+}

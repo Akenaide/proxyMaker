@@ -13,6 +13,7 @@
     <meta name="scaffolded-by" content="https://github.com/google/stagehand">
     <title>proxyMaker</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="print.css" media="print">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     <script defer src="main.dart" type="application/dart"></script>
     <script defer src="packages/browser/dart.js"></script>
@@ -20,11 +21,11 @@
 
 <body class="container-fluid">
     <div class="row">
-        <input class="col-md-3" id="input-dir" type="file">
+        <input class="col-md-3 no-print" id="input-dir" type="file">
         </input>
         <div id="output" class="col-md-5"></div>
-        <div id="images-box" class="col-md-4">
-          <input type="text" id="url"></input>
+        <div id="images-box" class="col-md-4 no-print">
+          <input type="text" id="url" value="http://yuyu-tei.jp/game_ws/sell/sell_price.php?ver=tld2nd2.0"></input>
           <input type="submit" id="send-url"></input>
         </div>
     </div>

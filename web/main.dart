@@ -4,19 +4,31 @@
 import 'dart:html';
 import 'dart:convert';
 
+removeImage(event) {
+  event.target.remove();
+}
+
+addImage(event) {
+  var image = new ImageElement()
+    ..src = event.target.src
+    ..classes.add("image");
+
+  querySelector('#output').append(image);
+  querySelectorAll('#output img').onClick.listen((e) => removeImage(e));
+}
+
 getCardImages() {
   InputElement url = querySelector("#url").value;
+  var output = querySelector('#images-box');
   HttpRequest.postFormData("/cardimages", {"url": url}).then((HttpRequest response) {
     List parsedList = JSON.decode(response.response);
-    var output = querySelector('#images-box');
     for (var url in parsedList) {
       var image = new ImageElement();
       image.src = url;
       output.append(image);
     };
+    querySelectorAll("#images-box img").onClick.listen((e) => addImage(e));
   });
-
-  // querySelector('#output').append(images);
 }
 
 getPdfFile() {
@@ -33,8 +45,8 @@ getPdfFile() {
 }
 
 void main() {
-  querySelector('#output').text = 'Your Dart app is running.';
   querySelector("#input-dir").onChange.listen((e) => getPdfFile());
   querySelector("#send-url").onClick.listen((e) => getCardImages());
+
 //   querySelector("#enterUrl").onclick.listen((event) {});
 }
