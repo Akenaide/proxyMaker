@@ -25,3 +25,9 @@ html, body {
   border-color: #777;
   color: #777;
 }
+
+#images-box img {
+    width: 49%;
+    margin-left: 3px;
+    margin-bottom: 3px;
+}

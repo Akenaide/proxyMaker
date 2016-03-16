@@ -8,7 +8,7 @@ getCardImages() {
   InputElement url = querySelector("#url").value;
   HttpRequest.postFormData("/cardimages", {"url": url}).then((HttpRequest response) {
     List parsedList = JSON.decode(response.response);
-    var output = querySelector('#output');
+    var output = querySelector('#images-box');
     for (var url in parsedList) {
       var image = new ImageElement();
       image.src = url;
