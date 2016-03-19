@@ -16,36 +16,25 @@ allowDrop(Event event) {
 }
 
 drag(MouseEvent event) {
+  print("YAy ====");
   event.dataTransfer.setData("text", event.target.id);
 }
 
 drop(MouseEvent event) {
   event.preventDefault();
-  String data = event.dataTransfer.getData("text");
-  print("hey");
+  var data = event.dataTransfer.getData("text");
   print(data);
-  CanvasElement canvas = event.target;
-  CanvasRenderingContext2D context = canvas.getContext("2d");
-  CanvasElement sourceCanvas = querySelector("#"+data);
-  double finalHeight = sourceCanvas.height * (canvas.width / sourceCanvas.width);
-  context.drawImageScaled(sourceCanvas, 0, (canvas.height - finalHeight - powerHeight), canvas.width, finalHeight);
+  print(querySelector("#"+data));
+  event.target.append(querySelector("#"+data));
 }
 
 addImage(event) {
 
   var image = new ImageElement()
-    ..src = event.target.src;
-
-  CanvasElement canvas = new CanvasElement()
-   ..classes.add("image")
-   ..onDragOver.listen((e) => allowDrop(e))
-   ..onDrop.listen((e) => drop(e));
-
-   image.onLoad.listen((e) {
-    CanvasRenderingContext2D context = canvas.getContext("2d");
-    canvas
-      ..width = image.width
-      ..height = image.height;
+    ..src = event.target.src
+    ..classes.add("image")
+    ..onDragOver.listen((e) => allowDrop(e))
+    ..onDrop.listen((e) => drop(e));
 
     context.drawImage(image, 0, 0);
    });
@@ -147,12 +136,7 @@ getPdfFile() {
 void main() {
   querySelector("#input-file").onChange.listen((e) => getPdfFile());
   querySelector("#send-url").onClick.listen((e) => getCardImages());
-  // querySelector("#yay").onDragStart.listen((e) => drag(e));
-
-  // CanvasElement canvas = querySelector('#myCanvas');
-  // ImageElement img = new ImageElement(src: "./love.png");
-  // querySelector("body").append(img);
-  // img.onLoad.listen((e) => initCanvas(img, canvas));
+  querySelector("#yay").onDragStart.listen((e) => drag(e));
 
 //   querySelector("#enterUrl").onclick.listen((event) {});
 }
