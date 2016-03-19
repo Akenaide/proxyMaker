@@ -8,10 +8,29 @@ removeImage(event) {
   event.target.remove();
 }
 
+allowDrop(Event event) {
+  event.preventDefault();
+}
+
+drag(MouseEvent event) {
+  print("YAy ====");
+  event.dataTransfer.setData("text", event.target.id);
+}
+
+drop(MouseEvent event) {
+  event.preventDefault();
+  var data = event.dataTransfer.getData("text");
+  print(data);
+  print(querySelector("#"+data));
+  event.target.append(querySelector("#"+data));
+}
+
 addImage(event) {
   var image = new ImageElement()
     ..src = event.target.src
-    ..classes.add("image");
+    ..classes.add("image")
+    ..onDragOver.listen((e) => allowDrop(e))
+    ..onDrop.listen((e) => drop(e));
 
   querySelector('#output').append(image);
   querySelectorAll('#output img').onClick.listen((e) => removeImage(e));
@@ -47,6 +66,7 @@ getPdfFile() {
 void main() {
   querySelector("#input-dir").onChange.listen((e) => getPdfFile());
   querySelector("#send-url").onClick.listen((e) => getCardImages());
+  querySelector("#yay").onDragStart.listen((e) => drag(e));
 
 //   querySelector("#enterUrl").onclick.listen((event) {});
 }
