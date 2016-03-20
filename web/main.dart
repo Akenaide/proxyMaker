@@ -68,31 +68,28 @@ getCardImages() {
   });
 }
 
-// getPdfFile() {
-//   print(querySelector("#input-dir").files);
-//   for (var file in querySelector("#input-dir").files) {
-//     var reader = new FileReader();
-//     reader.onLoad.listen((e) {
-//       var thumbnail = new Element.tag("embed");
-//       thumbnail.src = reader.result;
-//       querySelector('#output').append(thumbnail);
-//     });
-//     reader.readAsDataUrl(file);
-//   }
-// }
+initCanvas(List<ImageElement> imgs, CanvasElement canvas) {
+  CanvasRenderingContext2D context = canvas.getContext('2d');
+  imgs[0].onLoad.listen((e) {
+      int totalHeight = imgs[0].height * imgs.length;
+      canvas
+      ..width = imgs[0].width
+      ..height = totalHeight;
 
-initCanvas(ImageElement img, CanvasElement canvas) {
+      print("debug");
+      print(canvas.height);
+      print(canvas.height - imgs[0].height);
+      // context.drawImageScaled(img, 0, 0, 55, 50);
+      context.drawImage(imgs[0], 0, 0);
+      context.drawImage(imgs[1], 0, totalHeight - imgs[1].height);
+      querySelector("body").append(canvas);
+  });
+}
+
+bindCanvas(CanvasElement canvas){
+  List points = [];
   CanvasElement outCanvas = new CanvasElement();
   CanvasRenderingContext2D outContext = outCanvas.getContext('2d');
-  CanvasRenderingContext2D context = canvas.getContext('2d');
-  List points = [];
-
-  canvas
-    ..width = img.width
-    ..height = img.height;
-  // context.drawImageScaled(img, 0, 0, 55, 50);
-  context.drawImage(img, 0, 0);
-
   canvas.onMouseDown.listen((e) {
     points.add(e.offset);
     if (points.length == 2) {
@@ -114,15 +111,38 @@ initCanvas(ImageElement img, CanvasElement canvas) {
   });
 }
 
+getPdfFile() {
+  InputElement input = querySelector("#input-file");
+  for (var file in input.files) {
+    var reader = new FileReader();
+    reader.onLoad.listen((e) {
+      HttpRequest.postFormData("/translationimages", {"file": reader.result, "filename": file.name}).then((HttpRequest response) {
+        List parsedList = JSON.decode(response.response);
+        List images = [];
+        CanvasElement canvas = new CanvasElement();
+        for (var url in parsedList) {
+          ImageElement image = new ImageElement()
+            ..src = url;
+          images.add(image);
+        };
+        initCanvas(images, canvas);
+
+        bindCanvas(canvas);
+      });
+    });
+    reader.readAsDataUrl(file);
+  }
+}
+
 void main() {
-  // querySelector("#input-dir").onChange.listen((e) => getPdfFile());
+  querySelector("#input-file").onChange.listen((e) => getPdfFile());
   querySelector("#send-url").onClick.listen((e) => getCardImages());
   // querySelector("#yay").onDragStart.listen((e) => drag(e));
 
-  CanvasElement canvas = querySelector('#myCanvas');
-  ImageElement img = new ImageElement(src: "./love.png");
+  // CanvasElement canvas = querySelector('#myCanvas');
+  // ImageElement img = new ImageElement(src: "./love.png");
   // querySelector("body").append(img);
-  img.onLoad.listen((e) => initCanvas(img, canvas));
+  // img.onLoad.listen((e) => initCanvas(img, canvas));
 
 //   querySelector("#enterUrl").onclick.listen((event) {});
 }
