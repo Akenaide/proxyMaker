@@ -2,7 +2,7 @@
     .no-print {
         display: none !important;
     }
-    img {
+    canvas {
         width: 60mm !important;
         /*height: 85mm;*/
         margin-left: 1mm;
