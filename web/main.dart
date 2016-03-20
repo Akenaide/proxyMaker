@@ -4,6 +4,8 @@
 import 'dart:html';
 import 'dart:convert';
 
+final int powerHeight = 85;
+
 removeImage(event) {
   event.target.remove();
 }
@@ -13,7 +15,6 @@ allowDrop(Event event) {
 }
 
 drag(MouseEvent event) {
-  print(event.target.id);
   event.dataTransfer.setData("text", event.target.id);
 }
 
@@ -26,7 +27,7 @@ drop(MouseEvent event) {
   CanvasRenderingContext2D context = canvas.getContext("2d");
   CanvasElement sourceCanvas = querySelector("#"+data);
   double finalHeight = sourceCanvas.height * (canvas.width / sourceCanvas.width);
-  context.drawImageScaled(sourceCanvas, 0, canvas.height - finalHeight, canvas.width, finalHeight);
+  context.drawImageScaled(sourceCanvas, 0, (canvas.height - finalHeight - powerHeight), canvas.width, finalHeight);
 }
 
 addImage(event) {
