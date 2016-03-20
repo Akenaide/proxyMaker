@@ -9,12 +9,14 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/vincent-petithory/dataurl"
 )
 
 const yuyuteiURL = "http://yuyu-tei.jp/"
@@ -41,11 +43,55 @@ func lowCostSystemToURL(syspath string) string {
 	return strings.Replace(syspath, "\\", "/", -1)
 }
 
+func convertToJpg(filePath string) {
+	// convert -density 150 -trim to_love-ru_darkness_2nd_trial_deck.pdf -quality 100 -sharpen 0x1.0 love.jpg
+	cmd := exec.Command("convert", "-density", "150", "-trim", filePath, "-quality", "100", "-sharpen", "0x1.0", filePath+".jpg")
+	err := cmd.Start()
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = cmd.Wait()
+}
 
 func main() {
 	proxy := New("http://localhost:8080")
 	// static := http.FileServer(http.Dir("./"))
 	http.HandleFunc("/", proxy.handle)
+
+	http.HandleFunc("/translationimages", func(w http.ResponseWriter, r *http.Request) {
+		file := r.PostFormValue("file")
+		filename := r.PostFormValue("filename")
+		uid := strings.Replace(filename, filepath.Ext(filename), "", 1)
+		dir := filepath.Join("static", uid)
+		filePath := filepath.Join(dir, filename)
+
+		data, err := dataurl.DecodeString(file)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		// fmt.Println(dataURL.Data)
+		os.MkdirAll(dir, 0777)
+		ioutil.WriteFile(filePath, data.Data, 0644)
+		convertToJpg(filePath)
+		listJpg, err := filepath.Glob(filePath + "*.jpg")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		for i, jpgfile := range listJpg {
+			listJpg[i] = lowCostSystemToURL(jpgfile)
+		}
+
+		b, err := json.Marshal(listJpg)
+
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		w.Write(b)
+	})
 
 	http.HandleFunc("/cardimages", func(w http.ResponseWriter, r *http.Request) {
 		var wg sync.WaitGroup
