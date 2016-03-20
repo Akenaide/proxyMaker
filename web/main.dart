@@ -2,6 +2,7 @@
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
 import 'dart:html';
+import 'dart:async';
 import 'dart:convert';
 
 final int powerHeight = 85;
@@ -68,21 +69,29 @@ getCardImages() {
   });
 }
 
+Future loadImages(List<ImageElement> imgs) {
+  List<Future> imageFutures = [];
+  for (var i = 0; i < imgs.length; i++) {
+    var img = imgs[i];
+    imageFutures.add(img.onLoad.first);
+  }
+
+  return Future.wait(imageFutures);
+}
+
 initCanvas(List<ImageElement> imgs, CanvasElement canvas) {
   CanvasRenderingContext2D context = canvas.getContext('2d');
-  imgs[0].onLoad.listen((e) {
-      int totalHeight = imgs[0].height * imgs.length;
-      canvas
+  int totalHeight;
+  loadImages(imgs).then((images) {
+    totalHeight = imgs[0].height * imgs.length;
+    canvas
       ..width = imgs[0].width
       ..height = totalHeight;
 
-      print("debug");
-      print(canvas.height);
-      print(canvas.height - imgs[0].height);
-      // context.drawImageScaled(img, 0, 0, 55, 50);
-      context.drawImage(imgs[0], 0, 0);
-      context.drawImage(imgs[1], 0, totalHeight - imgs[1].height);
-      querySelector("body").append(canvas);
+    for (var i = 0; i < imgs.length; i++) {
+      context.drawImage(imgs[i], 0, imgs[i].height * i);
+    }
+    querySelector("body").append(canvas);
   });
 }
 
@@ -119,7 +128,8 @@ getPdfFile() {
       HttpRequest.postFormData("/translationimages", {"file": reader.result, "filename": file.name}).then((HttpRequest response) {
         List parsedList = JSON.decode(response.response);
         List images = [];
-        CanvasElement canvas = new CanvasElement();
+        CanvasElement canvas = new CanvasElement()
+          ..classes.add("no-print");
         for (var url in parsedList) {
           ImageElement image = new ImageElement()
             ..src = url;
