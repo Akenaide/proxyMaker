@@ -51,7 +51,7 @@ addImage(event) {
 
 
   querySelector('#output').append(canvas);
-  querySelectorAll('#output div.image').onClick.listen((e) => removeImage(e));
+  querySelectorAll('#output canvas.image').onClick.listen((e) => removeImage(e));
 }
 
 getCardImages() {
