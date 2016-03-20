@@ -25,7 +25,8 @@ drop(MouseEvent event) {
   CanvasElement canvas = event.target;
   CanvasRenderingContext2D context = canvas.getContext("2d");
   CanvasElement sourceCanvas = querySelector("#"+data);
-  context.drawImageScaled(sourceCanvas, 0, canvas.height - sourceCanvas.height, canvas.width, sourceCanvas.height);
+  double finalHeight = sourceCanvas.height * (canvas.width / sourceCanvas.width);
+  context.drawImageScaled(sourceCanvas, 0, canvas.height - finalHeight, canvas.width, finalHeight);
 }
 
 addImage(event) {
@@ -99,6 +100,7 @@ initCanvas(ImageElement img, CanvasElement canvas) {
       outCanvas
         ..attributes.addAll({"draggable": true})
         ..id = "yay"
+        ..classes.add("no-print")
         // ..id = new DateTime.now().millisecondsSinceEpoch.toString()
         ..onDragStart.listen((e) => drag(e))
         ..width = rect.width
