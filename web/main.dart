@@ -16,7 +16,6 @@ allowDrop(Event event) {
 }
 
 drag(MouseEvent event) {
-  print(event.target.id);
   event.dataTransfer.setData("text", event.target.id);
 }
 
@@ -28,7 +27,8 @@ drop(MouseEvent event) {
   CanvasElement canvas = event.target;
   CanvasRenderingContext2D context = canvas.getContext("2d");
   CanvasElement sourceCanvas = querySelector("#"+data);
-  context.drawImageScaled(sourceCanvas, 0, canvas.height - sourceCanvas.height, canvas.width, sourceCanvas.height);
+  double finalHeight = sourceCanvas.height * (canvas.width / sourceCanvas.width);
+  context.drawImageScaled(sourceCanvas, 0, (canvas.height - finalHeight - powerHeight), canvas.width, finalHeight);
 }
 
 addImage(event) {
@@ -52,7 +52,7 @@ addImage(event) {
 
 
   querySelector('#output').append(canvas);
-  querySelectorAll('#output div.image').onClick.listen((e) => removeImage(e));
+  querySelectorAll('#output canvas.image').onClick.listen((e) => removeImage(e));
 }
 
 getCardImages() {
@@ -69,22 +69,29 @@ getCardImages() {
   });
 }
 
+Future loadImages(List<ImageElement> imgs) {
+  List<Future> imageFutures = [];
+  for (var i = 0; i < imgs.length; i++) {
+    var img = imgs[i];
+    imageFutures.add(img.onLoad.first);
+  }
+
+  return Future.wait(imageFutures);
+}
 
 initCanvas(List<ImageElement> imgs, CanvasElement canvas) {
   CanvasRenderingContext2D context = canvas.getContext('2d');
-  imgs[0].onLoad.listen((e) {
-      int totalHeight = imgs[0].height * imgs.length;
-      canvas
+  int totalHeight;
+  loadImages(imgs).then((images) {
+    totalHeight = imgs[0].height * imgs.length;
+    canvas
       ..width = imgs[0].width
       ..height = totalHeight;
 
-      print("debug");
-      print(canvas.height);
-      print(canvas.height - imgs[0].height);
-      // context.drawImageScaled(img, 0, 0, 55, 50);
-      context.drawImage(imgs[0], 0, 0);
-      context.drawImage(imgs[1], 0, totalHeight - imgs[1].height);
-      querySelector("body").append(canvas);
+    for (var i = 0; i < imgs.length; i++) {
+      context.drawImage(imgs[i], 0, imgs[i].height * i);
+    }
+    querySelector("body").append(canvas);
   });
 }
 
@@ -100,6 +107,7 @@ bindCanvas(CanvasElement canvas){
       outCanvas
         ..attributes.addAll({"draggable": true})
         ..id = "yay"
+        ..classes.add("no-print")
         // ..id = new DateTime.now().millisecondsSinceEpoch.toString()
         ..onDragStart.listen((e) => drag(e))
         ..width = rect.width
@@ -120,7 +128,8 @@ getPdfFile() {
       HttpRequest.postFormData("/translationimages", {"file": reader.result, "filename": file.name}).then((HttpRequest response) {
         List parsedList = JSON.decode(response.response);
         List images = [];
-        CanvasElement canvas = new CanvasElement();
+        CanvasElement canvas = new CanvasElement()
+          ..classes.add("no-print");
         for (var url in parsedList) {
           ImageElement image = new ImageElement()
             ..src = url;
