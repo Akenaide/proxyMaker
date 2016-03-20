@@ -37,6 +37,10 @@ func (p *Prox) handle(w http.ResponseWriter, r *http.Request) {
 	// call to magic method from ReverseProxy object
 	p.proxy.ServeHTTP(w, r)
 }
+func lowCostSystemToURL(syspath string) string {
+	return strings.Replace(syspath, "\\", "/", -1)
+}
+
 
 func main() {
 	proxy := New("http://localhost:8080")
@@ -97,7 +101,7 @@ func main() {
 						// fmt.Printf("Link: n-%d __ %v%v\n", i, imageURL, uid)
 						defer reps.Body.Close()
 						// fmt.Println("image url: ", strings.Replace(fileName, "\\", "/", 1))
-						result = append(result, strings.Replace(fileName, "\\", "/", 2))
+						result = append(result, lowCostSystemToURL(fileName))
 					}(imageURL)
 				})
 			} else {
@@ -107,7 +111,7 @@ func main() {
 				}
 				for _, file := range files {
 					absPath := filepath.Join(dir, file.Name())
-					urlPath := strings.Replace(absPath, "\\", "/", 2)
+					urlPath := lowCostSystemToURL(absPath)
 					result = append(result, urlPath)
 				}
 
