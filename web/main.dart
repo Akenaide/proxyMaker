@@ -16,32 +16,43 @@ allowDrop(Event event) {
 }
 
 drag(MouseEvent event) {
-  print("YAy ====");
+  print(event.target.id);
   event.dataTransfer.setData("text", event.target.id);
 }
 
 drop(MouseEvent event) {
   event.preventDefault();
-  var data = event.dataTransfer.getData("text");
+  String data = event.dataTransfer.getData("text");
+  print("hey");
   print(data);
-  print(querySelector("#"+data));
-  event.target.append(querySelector("#"+data));
+  CanvasElement canvas = event.target;
+  CanvasRenderingContext2D context = canvas.getContext("2d");
+  CanvasElement sourceCanvas = querySelector("#"+data);
+  context.drawImageScaled(sourceCanvas, 0, canvas.height - sourceCanvas.height, canvas.width, sourceCanvas.height);
 }
 
 addImage(event) {
 
   var image = new ImageElement()
-    ..src = event.target.src
-    ..classes.add("image")
-    ..onDragOver.listen((e) => allowDrop(e))
-    ..onDrop.listen((e) => drop(e));
+    ..src = event.target.src;
+
+  CanvasElement canvas = new CanvasElement()
+   ..classes.add("image")
+   ..onDragOver.listen((e) => allowDrop(e))
+   ..onDrop.listen((e) => drop(e));
+
+   image.onLoad.listen((e) {
+    CanvasRenderingContext2D context = canvas.getContext("2d");
+    canvas
+      ..width = image.width
+      ..height = image.height;
 
     context.drawImage(image, 0, 0);
    });
 
 
   querySelector('#output').append(canvas);
-  querySelectorAll('#output canvas.image').onClick.listen((e) => removeImage(e));
+  querySelectorAll('#output div.image').onClick.listen((e) => removeImage(e));
 }
 
 getCardImages() {
@@ -58,36 +69,32 @@ getCardImages() {
   });
 }
 
-Future loadImages(List<ImageElement> imgs) {
-  List<Future> imageFutures = [];
-  for (var i = 0; i < imgs.length; i++) {
-    var img = imgs[i];
-    imageFutures.add(img.onLoad.first);
-  }
 
-  return Future.wait(imageFutures);
-}
+// getPdfFile() {
+//   print(querySelector("#input-dir").files);
+//   for (var file in querySelector("#input-dir").files) {
+//     var reader = new FileReader();
+//     reader.onLoad.listen((e) {
+//       var thumbnail = new Element.tag("embed");
+//       thumbnail.src = reader.result;
+//       querySelector('#output').append(thumbnail);
+//     });
+//     reader.readAsDataUrl(file);
+//   }
+// }
 
-initCanvas(List<ImageElement> imgs, CanvasElement canvas) {
-  CanvasRenderingContext2D context = canvas.getContext('2d');
-  int totalHeight;
-  loadImages(imgs).then((images) {
-    totalHeight = imgs[0].height * imgs.length;
-    canvas
-      ..width = imgs[0].width
-      ..height = totalHeight;
-
-    for (var i = 0; i < imgs.length; i++) {
-      context.drawImage(imgs[i], 0, imgs[i].height * i);
-    }
-    querySelector("body").append(canvas);
-  });
-}
-
-bindCanvas(CanvasElement canvas){
-  List points = [];
+initCanvas(ImageElement img, CanvasElement canvas) {
   CanvasElement outCanvas = new CanvasElement();
   CanvasRenderingContext2D outContext = outCanvas.getContext('2d');
+  CanvasRenderingContext2D context = canvas.getContext('2d');
+  List points = [];
+
+  canvas
+    ..width = img.width
+    ..height = img.height;
+  // context.drawImageScaled(img, 0, 0, 55, 50);
+  context.drawImage(img, 0, 0);
+
   canvas.onMouseDown.listen((e) {
     points.add(e.offset);
     if (points.length == 2) {
@@ -96,7 +103,6 @@ bindCanvas(CanvasElement canvas){
       outCanvas
         ..attributes.addAll({"draggable": true})
         ..id = "yay"
-        ..classes.add("no-print")
         // ..id = new DateTime.now().millisecondsSinceEpoch.toString()
         ..onDragStart.listen((e) => drag(e))
         ..width = rect.width
@@ -109,34 +115,15 @@ bindCanvas(CanvasElement canvas){
   });
 }
 
-getPdfFile() {
-  InputElement input = querySelector("#input-file");
-  for (var file in input.files) {
-    var reader = new FileReader();
-    reader.onLoad.listen((e) {
-      HttpRequest.postFormData("/translationimages", {"file": reader.result, "filename": file.name}).then((HttpRequest response) {
-        List parsedList = JSON.decode(response.response);
-        List images = [];
-        CanvasElement canvas = new CanvasElement()
-          ..classes.add("no-print");
-        for (var url in parsedList) {
-          ImageElement image = new ImageElement()
-            ..src = url;
-          images.add(image);
-        };
-        initCanvas(images, canvas);
-
-        bindCanvas(canvas);
-      });
-    });
-    reader.readAsDataUrl(file);
-  }
-}
-
 void main() {
-  querySelector("#input-file").onChange.listen((e) => getPdfFile());
+  // querySelector("#input-dir").onChange.listen((e) => getPdfFile());
   querySelector("#send-url").onClick.listen((e) => getCardImages());
-  querySelector("#yay").onDragStart.listen((e) => drag(e));
+  // querySelector("#yay").onDragStart.listen((e) => drag(e));
+
+  CanvasElement canvas = querySelector('#myCanvas');
+  ImageElement img = new ImageElement(src: "./love.png");
+  // querySelector("body").append(img);
+  img.onLoad.listen((e) => initCanvas(img, canvas));
 
 //   querySelector("#enterUrl").onclick.listen((event) {});
 }
