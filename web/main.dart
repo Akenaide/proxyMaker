@@ -11,6 +11,11 @@ removeImage(event) {
   event.target.remove();
 }
 
+void toggleHideTranslation() {
+  CanvasElement canvas = querySelector(".translation-canvas");
+  canvas.classes.toggle("hide");
+}
+
 allowDrop(Event event) {
   event.preventDefault();
 }
@@ -92,6 +97,7 @@ initCanvas(List<ImageElement> imgs, CanvasElement canvas) {
       context.drawImage(imgs[i], 0, imgs[i].height * i);
     }
     querySelector("body").append(canvas);
+    querySelector("#toggle-hide-translation").classes.toggle("hide");
   });
 }
 
@@ -116,6 +122,7 @@ bindCanvas(CanvasElement canvas){
         sourceRect: rect);
       points.clear();
       querySelector("#output").append(outCanvas);
+      querySelector(".translation-canvas").classes.toggle("hide");
     }
   });
 }
@@ -129,6 +136,8 @@ getPdfFile() {
         List parsedList = JSON.decode(response.response);
         List images = [];
         CanvasElement canvas = new CanvasElement()
+          ..classes.add("translation-canvas")
+          ..classes.add("hide")
           ..classes.add("no-print");
         for (var url in parsedList) {
           ImageElement image = new ImageElement()
@@ -147,6 +156,7 @@ getPdfFile() {
 void main() {
   querySelector("#input-file").onChange.listen((e) => getPdfFile());
   querySelector("#send-url").onClick.listen((e) => getCardImages());
+  querySelector("#toggle-hide-translation").onClick.listen((e) => toggleHideTranslation());
   // querySelector("#yay").onDragStart.listen((e) => drag(e));
 
   // CanvasElement canvas = querySelector('#myCanvas');
