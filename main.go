@@ -73,7 +73,13 @@ func main() {
 		// fmt.Println(dataURL.Data)
 		os.MkdirAll(dir, 0777)
 		ioutil.WriteFile(filePath, data.Data, 0644)
-		convertToJpg(filePath)
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			convertToJpg(filePath)
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		listJpg, err := filepath.Glob(filePath + "*.jpg")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
