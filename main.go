@@ -20,6 +20,7 @@ import (
 )
 
 const yuyuteiURL = "http://yuyu-tei.jp/"
+const wsDeckUrl = "http://wsdecks.com/"
 
 type Prox struct {
 	// target url of reverse proxy
@@ -105,6 +106,7 @@ func main() {
 		result := []string{}
 		link := r.PostFormValue("url")
 		classCSS := r.PostFormValue("class_css")
+		filter := ""
 
 		if classCSS == "" {
 			classCSS = ".card_list_box"
@@ -112,22 +114,42 @@ func main() {
 
 		if link != "" {
 			doc, err := goquery.NewDocument(link)
-			parsedURL, _ := url.Parse(link)
-			values, _ := url.ParseQuery(parsedURL.RawQuery)
-			uid := values.Get("ver")
+			uid := ""
+			site := ""
+			imageURL := ""
+
+			if strings.Contains(link, yuyuteiURL) {
+				site = "yuyutei"
+				filter = classCSS + " .image img"
+				parsedURL, _ := url.Parse(link)
+				values, _ := url.ParseQuery(parsedURL.RawQuery)
+				uid = values.Get("ver")
+			} else if strings.Contains(link, wsDeckUrl) {
+				site = "wsdeck"
+				filter = ".wscard" + " img"
+				uid = filepath.Base(link)
+			}
 			// currentDir, _ := os.Getwd()
 			dir := filepath.Join("static", uid)
+
+			if filter == "" {
+				http.Error(w, fmt.Sprintln("Url %s is not supported", link), 500)
+			}
 
 			if err != nil {
 				fmt.Println("Nope")
 			}
 			if _, err := os.Stat(dir); os.IsNotExist(err) {
 				os.MkdirAll(dir, 0744)
-				doc.Find(classCSS + " .image img").Each(func(i int, s *goquery.Selection) {
+				doc.Find(filter).Each(func(i int, s *goquery.Selection) {
 					wg.Add(1)
 					val, _ := s.Attr("src")
-					big := strings.Replace(val, "90_126", "front", 1)
-					imageURL := yuyuteiURL + big
+					if site == "yuyutei" {
+						big := strings.Replace(val, "90_126", "front", 1)
+						imageURL = yuyuteiURL + big
+					} else if site == "wsdeck" {
+						imageURL = wsDeckUrl + val
+					}
 
 					go func(url string) {
 						defer wg.Done()
