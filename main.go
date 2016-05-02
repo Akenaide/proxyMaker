@@ -56,6 +56,8 @@ func convertToJpg(filePath string) {
 
 func main() {
 	proxy := New("http://localhost:8080")
+	os.MkdirAll(filepath.Join("static", "yuyutei"), 0744)
+	os.MkdirAll(filepath.Join("static", "wsdeck"), 0744)
 	// static := http.FileServer(http.Dir("./"))
 	http.HandleFunc("/", proxy.handle)
 
