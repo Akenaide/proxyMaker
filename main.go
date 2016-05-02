@@ -130,10 +130,10 @@ func main() {
 				uid = filepath.Base(link)
 			}
 			// currentDir, _ := os.Getwd()
-			dir := filepath.Join("static", uid)
+			dir := filepath.Join("static", site, uid)
 
 			if filter == "" {
-				http.Error(w, fmt.Sprintln("Url %s is not supported", link), 500)
+				http.Error(w, fmt.Sprintln("Url is not supported", link), 500)
 			}
 
 			if err != nil {
