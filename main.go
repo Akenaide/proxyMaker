@@ -70,6 +70,7 @@ func main() {
 
 		data, err := dataurl.DecodeString(file)
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -80,11 +81,13 @@ func main() {
 			convertToJpg(filePath)
 		}
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		listJpg, err := filepath.Glob(filePath + "*.jpg")
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -95,6 +98,7 @@ func main() {
 		b, err := json.Marshal(listJpg)
 
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, err.Error(), 500)
 			return
 		}
