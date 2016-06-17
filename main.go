@@ -21,6 +21,7 @@ import (
 
 const yuyuteiURL = "http://yuyu-tei.jp/"
 const wsDeckUrl = "http://wsdecks.com/"
+const hoTcURL = "http://www.heartofthecards.com/code/cardlist.html?card=WS_"
 
 type Prox struct {
 	// target url of reverse proxy
@@ -52,6 +53,29 @@ func convertToJpg(filePath string) {
 		fmt.Println(err)
 	}
 	err = cmd.Wait()
+}
+
+func createCardsCodeFile(dirPath string) (string, error) {
+	dirPath += "/"
+	out, err := os.Create(dirPath + "codes.txt")
+	defer out.Close()
+	if err != nil {
+		return "", err
+	}
+	cardList, err := filepath.Glob(dirPath + "*.gif")
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	// PI/S40-056
+	for _, card := range cardList {
+		card = strings.Replace(card, dirPath, "", 1)
+		card = strings.Replace(card, "_", "-", 1)
+		card = strings.Replace(card, "_", "/", 1)
+		ex := strings.Split(card, ".")[0]
+		out.WriteString(ex + "\n")
+	}
+	return out.Name(), nil
 }
 
 func main() {
@@ -196,6 +220,7 @@ func main() {
 				}
 
 			}
+			createCardsCodeFile(dir)
 		}
 
 		wg.Wait()
