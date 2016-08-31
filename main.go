@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -28,6 +30,21 @@ type Prox struct {
 	target *url.URL
 	// instance of Go ReverseProxy thatwill do the job for us
 	proxy *httputil.ReverseProxy
+}
+
+type siteConfig struct {
+	Name   string
+	Filter string
+}
+
+type cardsConfig struct {
+	Dir  string
+	Site siteConfig
+}
+
+type cardStruc struct {
+	ID          string
+	Translation string
 }
 
 func New(target string) *Prox {
@@ -60,6 +77,7 @@ func createCardsCodeFile(dirPath string) (string, error) {
 	out, err := os.Create(dirPath + "codes.txt")
 	defer out.Close()
 	if err != nil {
+		fmt.Println(err)
 		return "", err
 	}
 	cardList, err := filepath.Glob(dirPath + "*.gif")
@@ -76,6 +94,61 @@ func createCardsCodeFile(dirPath string) (string, error) {
 		out.WriteString(ex + "\n")
 	}
 	return out.Name(), nil
+}
+
+func getTranslationHotC(codesPath string) []cardStruc {
+	translations := []cardStruc{}
+	file, err := os.Open(codesPath + "/codes.txt")
+	scanner := bufio.NewScanner(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("getTranslationHotC")
+	for scanner.Scan() {
+		// fmt.Println(scanner.Text())
+		url := hoTcURL + scanner.Text()
+		fmt.Println(url)
+		doc, err := goquery.NewDocument(url)
+		if err != nil {
+			fmt.Println(err)
+		}
+		textHTML, err := doc.Find(".cards3").Slice(2, 3).Html()
+		if err != nil {
+			fmt.Println(err)
+		}
+		textHTML = strings.Replace(textHTML, "<br/>", "&#10;", -1)
+		// html.UnescapeString(textHTML)
+		card := cardStruc{ID: scanner.Text(), Translation: html.UnescapeString(textHTML)}
+
+		translations = append(translations, card)
+		// json.Marshal(card)
+		// doc.Find(".card3").Get(2)
+	}
+	return translations
+}
+
+func getCardsConfig(link string) (cardsConfig, error) {
+	uid := ""
+	site := siteConfig{}
+
+	if strings.Contains(link, yuyuteiURL) {
+		site.Name = "yuyutei"
+		site.Filter = ".card_list_box" + " .image img"
+		parsedURL, _ := url.Parse(link)
+		values, _ := url.ParseQuery(parsedURL.RawQuery)
+		uid = values.Get("ver")
+	} else if strings.Contains(link, wsDeckUrl) {
+		site.Name = "wsdeck"
+		site.Filter = ".wscard" + " img"
+		uid = filepath.Base(link)
+	}
+	dir := filepath.Join("static", site.Name, uid)
+	cardsConfig := cardsConfig{Dir: dir, Site: site}
+	if site.Filter == "" {
+		return cardsConfig, fmt.Errorf("Url is not supported %v", link)
+	}
+
+	return cardsConfig, nil
 }
 
 func main() {
@@ -135,56 +208,31 @@ func main() {
 
 		result := []string{}
 		link := r.PostFormValue("url")
-		classCSS := r.PostFormValue("class_css")
-		filter := ""
-
-		if classCSS == "" {
-			classCSS = ".card_list_box"
-		}
 
 		if link != "" {
 			doc, err := goquery.NewDocument(link)
-			uid := ""
-			site := ""
 			imageURL := ""
-
-			if strings.Contains(link, yuyuteiURL) {
-				site = "yuyutei"
-				filter = classCSS + " .image img"
-				parsedURL, _ := url.Parse(link)
-				values, _ := url.ParseQuery(parsedURL.RawQuery)
-				uid = values.Get("ver")
-			} else if strings.Contains(link, wsDeckUrl) {
-				site = "wsdeck"
-				filter = ".wscard" + " img"
-				uid = filepath.Base(link)
-			}
-			// currentDir, _ := os.Getwd()
-			dir := filepath.Join("static", site, uid)
-
-			if filter == "" {
-				http.Error(w, fmt.Sprintln("Url is not supported", link), 500)
-			}
+			cardsConfig, err := getCardsConfig(link)
 
 			if err != nil {
-				fmt.Println("Nope")
+				fmt.Println(err)
 			}
-			if _, err := os.Stat(dir); os.IsNotExist(err) {
-				os.MkdirAll(dir, 0744)
-				doc.Find(filter).Each(func(i int, s *goquery.Selection) {
+			if _, err := os.Stat(cardsConfig.Dir); os.IsNotExist(err) {
+				os.MkdirAll(cardsConfig.Dir, 0744)
+				doc.Find(cardsConfig.Site.Filter).Each(func(i int, s *goquery.Selection) {
 					wg.Add(1)
 					val, _ := s.Attr("src")
-					if site == "yuyutei" {
+					if cardsConfig.Site.Name == "yuyutei" {
 						big := strings.Replace(val, "90_126", "front", 1)
 						imageURL = yuyuteiURL + big
-					} else if site == "wsdeck" {
+					} else if cardsConfig.Site.Name == "wsdeck" {
 						imageURL = wsDeckUrl + val
 					}
 
 					go func(url string) {
 						defer wg.Done()
 						// fmt.Println("dir : ", dir)
-						fileName := filepath.Join(dir, path.Base(url))
+						fileName := filepath.Join(cardsConfig.Dir, path.Base(url))
 						out, err := os.Create(fileName)
 						if err != nil {
 							fmt.Println(err)
@@ -209,18 +257,19 @@ func main() {
 					}(imageURL)
 				})
 			} else {
-				files, err := ioutil.ReadDir(dir)
+				files, err := ioutil.ReadDir(cardsConfig.Dir)
 				if err != nil {
 					fmt.Println(err)
 				}
 				for _, file := range files {
-					absPath := filepath.Join(dir, file.Name())
+					absPath := filepath.Join(cardsConfig.Dir, file.Name())
 					urlPath := lowCostSystemToURL(absPath)
 					result = append(result, urlPath)
 				}
 
 			}
-			createCardsCodeFile(dir)
+			createCardsCodeFile(cardsConfig.Dir)
+			// getTranslationHotC(cardsConfig.Dir)
 		}
 
 		wg.Wait()
