@@ -75,6 +75,7 @@ func convertToJpg(filePath string) {
 }
 
 func createCardsCodeFile(dirPath string) (string, error) {
+	//TODO Do nothing if file exists
 	dirPath += "/"
 	out, err := os.Create(dirPath + "codes.txt")
 	defer out.Close()
@@ -270,12 +271,12 @@ func main() {
 				}
 
 			}
-			createCardsCodeFile(cardsConfig.Dir)
 			// getTranslationHotC(cardsConfig.Dir)
+			wg.Wait()
+			fmt.Printf("Finish")
+			createCardsCodeFile(cardsConfig.Dir)
 		}
 
-		wg.Wait()
-		fmt.Printf("Finish")
 		b, err := json.Marshal(result)
 
 		if err != nil {
