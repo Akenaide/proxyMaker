@@ -162,6 +162,20 @@ func main() {
 	http.HandleFunc("/", proxy.handle)
 
 	http.HandleFunc("/translationimages", func(w http.ResponseWriter, r *http.Request) {
+		link := r.PostFormValue("url")
+		cardsConfig, err := getCardsConfig(link)
+		if err != nil {
+			fmt.Println(err)
+		}
+		result := getTranslationHotC(cardsConfig.Dir)
+		b, err := json.Marshal(result)
+		if err != nil {
+			fmt.Println(err)
+		}
+		w.Write(b)
+	})
+
+	http.HandleFunc("/translationimages_old", func(w http.ResponseWriter, r *http.Request) {
 		file := r.PostFormValue("file")
 		filename := r.PostFormValue("filename")
 		uid := strings.Replace(filename, filepath.Ext(filename), "", 1)
@@ -271,7 +285,6 @@ func main() {
 				}
 
 			}
-			// getTranslationHotC(cardsConfig.Dir)
 			wg.Wait()
 			fmt.Printf("Finish")
 			createCardsCodeFile(cardsConfig.Dir)

@@ -71,6 +71,9 @@ getCardImages() {
       output.append(image);
     };
     querySelectorAll("#images-box img").onClick.listen((e) => addImage(e));
+    HttpRequest.postFormData("/translationimages", {"url": url.value}).then((HttpRequest response) {
+      print(response.response);
+    });
   });
 }
 
