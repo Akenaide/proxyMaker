@@ -22,9 +22,10 @@ import (
 )
 
 const yuyuteiURL = "http://yuyu-tei.jp/"
-const wsDeckUrl = "http://wsdecks.com/"
+const wsDeckURL = "http://wsdecks.com/"
 const hoTcURL = "http://www.heartofthecards.com/code/cardlist.html?card=WS_"
 
+// Prox struct
 type Prox struct {
 	// target url of reverse proxy
 	target *url.URL
@@ -47,6 +48,7 @@ type cardStruc struct {
 	Translation string
 }
 
+// New proxy
 func New(target string) *Prox {
 	url, _ := url.Parse(target)
 	// you should handle error on parsing
@@ -137,7 +139,7 @@ func getCardsConfig(link string) (cardsConfig, error) {
 		parsedURL, _ := url.Parse(link)
 		values, _ := url.ParseQuery(parsedURL.RawQuery)
 		uid = values.Get("ver")
-	} else if strings.Contains(link, wsDeckUrl) {
+	} else if strings.Contains(link, wsDeckURL) {
 		site.Name = "wsdeck"
 		site.Filter = ".wscard" + " img"
 		uid = filepath.Base(link)
@@ -226,7 +228,7 @@ func main() {
 						big := strings.Replace(val, "90_126", "front", 1)
 						imageURL = yuyuteiURL + big
 					} else if cardsConfig.Site.Name == "wsdeck" {
-						imageURL = wsDeckUrl + val
+						imageURL = wsDeckURL + val
 					}
 
 					go func(url string) {
