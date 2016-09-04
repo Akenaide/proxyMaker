@@ -71,8 +71,22 @@ getCardImages() {
       output.append(image);
     };
     querySelectorAll("#images-box img").onClick.listen((e) => addImage(e));
+    // var parsedListe = [
+    //   {
+    //     "ID":"PY-S38/005R",
+    //     "Translation":"[C] Your other Character in the Front Row Center Slot gains +500 Power.\n[S] \u003cb\u003eBRAINSTORM\u003c/b\u003e [(1) Rest 2 of your Characters] Flip over the top 4 cards of your Library and put them in the Waiting Room. For each Climax card revealed this way, search your Library for up to 1 ::Puyo:: Character, reveal it, put it in your hand, and shuffle your Library. "
+    //   },
+    //   {
+    //     "ID":"PY-S38/005R",
+    //     "Translation":"[C] Your other Character in the Front Row Center Slot gains +500 Power.\n[S] \u003cb\u003eBRAINSTORM\u003c/b\u003e [(1) Rest 2 of your Characters] Flip over the top 4 cards of your Library and put them in the Waiting Room. For each Climax card revealed this way, search your Library for up to 1 ::Puyo:: Character, reveal it, put it in your hand, and shuffle your Library. "
+    //   },
+    //   {"ID":"PY-S38/T18","Translation":"\u003cb\u003eBRAINSTORM\u003c/b\u003e Choose a Character in your Waiting Room and return it to your hand. Flip over the top 3 cards of your Library and put them in your Waiting Room. If at least 1 Climax card was revealed this way, choose a Character in your Waiting Room and return it to your hand. "}
+    // ];
+    // initCanvas(parsedListe);
+
     HttpRequest.postFormData("/translationimages", {"url": url.value}).then((HttpRequest response) {
-      print(response.response);
+      List parsedList = JSON.decode(response.response);
+      initCanvas(parsedList);
     });
   });
 }
@@ -87,21 +101,57 @@ Future loadImages(List<ImageElement> imgs) {
   return Future.wait(imageFutures);
 }
 
-initCanvas(List<ImageElement> imgs, CanvasElement canvas) {
-  CanvasRenderingContext2D context = canvas.getContext('2d');
-  int totalHeight;
-  loadImages(imgs).then((images) {
-    totalHeight = imgs[0].height * imgs.length;
-    canvas
-      ..width = imgs[0].width
-      ..height = totalHeight;
+checkReturnLine (String text) {
 
-    for (var i = 0; i < imgs.length; i++) {
-      context.drawImage(imgs[i], 0, imgs[i].height * i);
+}
+
+getLines(String text) {
+  List<String> lines = [];
+  String line = "";
+  for (var word in text.split(" ")) {
+    if (line.length <= 60) {
+      if (word.contains("\n")) {
+        var subline = word.split("\n");
+        line = line + " " + subline[0];
+        lines.add(line);
+        line = subline[1];
+      } else {
+        line = line + " " + word;
+      }
+    } else {
+      if (word.contains("\n")) {
+        var subline = word.split("\n");
+        line = line + " " + subline[0];
+        lines.add(line);
+        line = subline[1];
+      } else {
+        line = line + " " + word;
+        lines.add(line);
+        line = "";
+      }
     }
-    querySelector("body").append(canvas);
-    querySelector("#toggle-hide-translation").classes.toggle("hide");
-  });
+  }
+  return lines;
+}
+
+initCanvas(List<Object> cards) {
+  for (var card in cards) {
+    // var cardJson = JSON.decode(card);
+    // Create a SVG instead of Canvas it is easier to modify height
+    List<String> lines = getLines(card['Translation']);
+    var height = 20;
+    var cardJson = card;
+    CanvasElement canvas = new CanvasElement()
+    ..id = cardJson['ID']
+    ..width = 350
+    ..classes.add("no-print");
+    CanvasRenderingContext2D context = canvas.getContext('2d');
+    for (var line in lines) {
+      context.fillText(line, 0, height);
+      height = height + 20;
+    }
+    querySelector("#output").append(canvas);
+  }
 }
 
 bindCanvas(CanvasElement canvas){
