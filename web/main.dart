@@ -2,6 +2,7 @@
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
 import 'dart:html';
+import 'dart:svg' as svg;
 import 'dart:async';
 import 'dart:convert';
 
@@ -131,26 +132,31 @@ getLines(String text) {
       }
     }
   }
+  if (line != "") {
+    lines.add(line);
+  }
   return lines;
 }
 
 initCanvas(List<Object> cards) {
   for (var card in cards) {
     // var cardJson = JSON.decode(card);
-    // Create a SVG instead of Canvas it is easier to modify height
     List<String> lines = getLines(card['Translation']);
     var height = 20;
     var cardJson = card;
-    CanvasElement canvas = new CanvasElement()
+    svg.SvgElement svgEl = new svg.SvgElement.tag("svg")
     ..id = cardJson['ID']
-    ..width = 350
     ..classes.add("no-print");
-    CanvasRenderingContext2D context = canvas.getContext('2d');
+
     for (var line in lines) {
-      context.fillText(line, 0, height);
+      svg.TextElement tspan = new svg.TextElement()
+        ..text = line;
+      tspan.attributes = {'y' : height.toString(), 'x': "10", "fill":"black"};
       height = height + 20;
+      svgEl.append(tspan);
     }
-    querySelector("#output").append(canvas);
+    svgEl.attributes = {"width": "480", "height": height.toString()};
+    querySelector("#output").append(svgEl);
   }
 }
 
