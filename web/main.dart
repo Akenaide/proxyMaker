@@ -6,7 +6,7 @@ import 'dart:svg' as svg;
 import 'dart:async';
 import 'dart:convert';
 
-final int powerHeight = 85;
+final int powerHeight = 90;
 
 removeImage(event) {
   event.target.remove();
@@ -28,13 +28,12 @@ drag(MouseEvent event) {
 drop(MouseEvent event) {
   event.preventDefault();
   String data = event.dataTransfer.getData("text");
-  print("hey");
-  print(data);
   CanvasElement canvas = event.target;
   CanvasRenderingContext2D context = canvas.getContext("2d");
+  // CanvasElement sourceCanvas = querySelector(data);
   CanvasElement sourceCanvas = querySelector("#"+data);
   double finalHeight = sourceCanvas.height * (canvas.width / sourceCanvas.width);
-  context.drawImageScaled(sourceCanvas, 0, (canvas.height - finalHeight - powerHeight), canvas.width, finalHeight);
+  context.drawImageScaled(sourceCanvas, 0, (canvas.height - powerHeight), canvas.width, finalHeight);
 }
 
 addImage(event) {
@@ -107,10 +106,11 @@ checkReturnLine (String text) {
 }
 
 getLines(String text) {
+  int maxlength = 40;
   List<String> lines = [];
   String line = "";
   for (var word in text.split(" ")) {
-    if (line.length <= 60) {
+    if (line.length <= maxlength) {
       if (word.contains("\n")) {
         var subline = word.split("\n");
         line = line + " " + subline[0];
@@ -139,11 +139,14 @@ getLines(String text) {
 }
 
 initCanvas(List<Object> cards) {
+  var xmlSeria = new XmlSerializer();
   for (var card in cards) {
     // var cardJson = JSON.decode(card);
     List<String> lines = getLines(card['Translation']);
     var height = 20;
     var cardJson = card;
+    CanvasElement canvas = new CanvasElement();
+
     svg.SvgElement svgEl = new svg.SvgElement.tag("svg")
     ..id = cardJson['ID']
     ..classes.add("no-print");
@@ -151,12 +154,39 @@ initCanvas(List<Object> cards) {
     for (var line in lines) {
       svg.TextElement tspan = new svg.TextElement()
         ..text = line;
-      tspan.attributes = {'y' : height.toString(), 'x': "10", "fill":"black"};
-      height = height + 20;
+      tspan.attributes = {
+        'y' : height.toString(),
+        'x': "10",
+        'font-size': "12",
+        "fill":"black"
+      };
+      height = height + 15;
       svgEl.append(tspan);
     }
-    svgEl.attributes = {"width": "480", "height": height.toString()};
-    querySelector("#output").append(svgEl);
+    svgEl.attributes = {
+      "width": "260",
+      "height": height.toString(),
+      "style": "background-color: white;"
+    };
+
+    var svsString = xmlSeria.serializeToString(svgEl);
+    var blop = new Blob([svsString], "image/svg+xml;charset=utf-8");
+    var url = Url.createObjectUrl(blop);
+    ImageElement img = new ImageElement()
+      ..src = url;
+
+
+    img.onLoad.listen((e) {
+      canvas
+        ..width = img.width
+        ..height = img.height
+        ..draggable = true
+        ..id = card["ID"].replaceFirst("/", "")
+        ..onDragStart.listen((e) => drag(e));
+      CanvasRenderingContext2D context = canvas.getContext('2d');
+      context.drawImage(img, 0, 0);
+    });
+    querySelector("#output").append(canvas);
   }
 }
 
