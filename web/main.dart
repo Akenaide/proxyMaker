@@ -242,9 +242,29 @@ getPdfFile() {
   }
 }
 
+printTranslation() {
+  InputElement deckUrl = querySelector("#url");
+
+  HttpRequest.postFormData("/translationimages", {"url": deckUrl.value}).then((HttpRequest response) {
+    List parsedList = JSON.decode(response.response);
+    for (var card in parsedList) {
+      DivElement printDiv = new DivElement();
+      Element cardId = new Element.tag("h3");
+      ParagraphElement translation = new ParagraphElement();
+      translation.appendHtml(card["Translation"].replaceAll("\n", "<br>"));
+      cardId.appendText(card["ID"]);
+      printDiv.append(cardId);
+      printDiv.append(translation);
+
+      querySelector('#output').append(printDiv);
+    }
+  });
+}
+
 void main() {
   querySelector("#input-file").onChange.listen((e) => getPdfFile());
   querySelector("#send-url").onClick.listen((e) => getCardImages());
+  querySelector("#print-translation").onClick.listen((e) => printTranslation());
   querySelector("#toggle-hide-translation").onClick.listen((e) => toggleHideTranslation());
   // querySelector("#yay").onDragStart.listen((e) => drag(e));
 
