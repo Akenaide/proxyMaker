@@ -250,6 +250,7 @@ func main() {
 						defer wg.Done()
 						// fmt.Println("dir : ", dir)
 						fileName := filepath.Join(cardsConfig.Dir, path.Base(url))
+						fileName = strings.Split(fileName, "?")[0]
 						out, err := os.Create(fileName)
 						if err != nil {
 							fmt.Println(err)
