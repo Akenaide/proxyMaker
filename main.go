@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -24,6 +25,7 @@ import (
 const yuyuteiURL = "http://yuyu-tei.jp/"
 const wsDeckURL = "https://wsdecks.com/"
 const hoTcURL = "http://www.heartofthecards.com/code/cardlist.html?card=WS_"
+const yuyuteiBase = "http://yuyu-tei.jp/game_ws"
 
 // Prox struct
 type Prox struct {
@@ -152,6 +154,44 @@ func getCardsConfig(link string) (cardsConfig, error) {
 	}
 
 	return cardsConfig, nil
+}
+
+func yytImages(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("yytImage")
+	out, err := os.Create(filepath.Join("static", "yyt_image_urls.json"))
+	var buffer bytes.Buffer
+	defer out.Close()
+	cardMap := map[string]string{}
+	filter := "ul[data-class=sell] .item_single_card .nav_list_second .nav_list_third a"
+	doc, err := goquery.NewDocument(yuyuteiBase)
+
+	if err != nil {
+		fmt.Println("Error in get yyt urls")
+	}
+
+	doc.Find(filter).Each(func(i int, s *goquery.Selection) {
+		url, has := s.Attr("href")
+		fmt.Println(url)
+		if has {
+			images, errCard := goquery.NewDocument(yuyuteiURL + url)
+			images.Find(".card_unit").Each(func(cardI int, cardS *goquery.Selection) {
+				cardURL, _:= cardS.Find(".image img").Attr("src")
+				cardURL = strings.Replace(cardURL, "90_126", "front", 1)
+				cardMap[strings.TrimSpace(cardS.Find(".id").Text())] = cardURL
+			})
+			if errCard != nil {
+				fmt.Println(errCard)
+			}
+		}
+	})
+	b, errMarshal := json.Marshal(cardMap)
+	if errMarshal != nil {
+		fmt.Println(errMarshal)
+	}
+	json.Indent(&buffer, b, "", "\t")
+	buffer.WriteTo(out)
+	fmt.Println("finish")
+
 }
 
 func main() {
@@ -299,6 +339,9 @@ func main() {
 		}
 		w.Write(b)
 	})
+
+
+	http.HandleFunc("/update_yyt_images", yytImages)
 
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println("static", r.URL.Path[1:])
