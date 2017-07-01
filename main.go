@@ -175,7 +175,7 @@ func yytImages(w http.ResponseWriter, r *http.Request) {
 		if has {
 			images, errCard := goquery.NewDocument(yuyuteiURL + url)
 			images.Find(".card_unit").Each(func(cardI int, cardS *goquery.Selection) {
-				cardURL, _:= cardS.Find(".image img").Attr("src")
+				cardURL, _ := cardS.Find(".image img").Attr("src")
 				cardURL = strings.Replace(cardURL, "90_126", "front", 1)
 				cardMap[strings.TrimSpace(cardS.Find(".id").Text())] = cardURL
 			})
@@ -311,6 +311,7 @@ func main() {
 						// fmt.Printf("Link: n-%d __ %v%v\n", i, imageURL, uid)
 						defer reps.Body.Close()
 						// fmt.Println("image url: ", strings.Replace(fileName, "\\", "/", 1))
+
 						result = append(result, lowCostSystemToURL(fileName))
 					}(imageURL)
 				})
@@ -319,10 +320,22 @@ func main() {
 				if err != nil {
 					fmt.Println(err)
 				}
+				yytImages, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_image_urls.json"))
+				if yytErr != nil {
+					fmt.Println(yytErr)
+				}
+				var yytMap = map[string]string{}
+				json.Unmarshal(yytImages, &yytMap)
 				for _, file := range files {
-					absPath := filepath.Join(cardsConfig.Dir, file.Name())
-					urlPath := lowCostSystemToURL(absPath)
-					result = append(result, urlPath)
+					cardID := strings.Replace(file.Name(), "_", "/", 1)
+					cardID = strings.Replace(cardID, "_", "-", 1)
+					cardID = strings.Split(cardID, ".")[0]
+					fmt.Println(cardID)
+					cardURL, has := yytMap[cardID]
+					if has {
+						urlPath := yuyuteiURL + cardURL
+						result = append(result, urlPath)
+					}
 				}
 
 			}
@@ -339,7 +352,6 @@ func main() {
 		}
 		w.Write(b)
 	})
-
 
 	http.HandleFunc("/update_yyt_images", yytImages)
 
