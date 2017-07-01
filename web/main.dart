@@ -84,10 +84,10 @@ getCardImages() {
     // ];
     // initCanvas(parsedListe);
 
-    HttpRequest.postFormData("/translationimages", {"url": url.value}).then((HttpRequest response) {
-      List parsedList = JSON.decode(response.response);
-      initCanvas(parsedList);
-    });
+    // HttpRequest.postFormData("/translationimages", {"url": url.value}).then((HttpRequest response) {
+    //   List parsedList = JSON.decode(response.response);
+    //   initCanvas(parsedList);
+    // });
   });
 }
 
