@@ -23,7 +23,7 @@ import (
 )
 
 const yuyuteiURL = "http://yuyu-tei.jp/"
-const wsDeckURL = "https://wsdecks.com/"
+const wsDeckURL = "https://wsdecks.com"
 const hoTcURL = "http://www.heartofthecards.com/code/cardlist.html?card=WS_"
 const yuyuteiBase = "http://yuyu-tei.jp/game_ws"
 
