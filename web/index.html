@@ -45,18 +45,20 @@ new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
         <!-- <canvas class="pull-left no-print" id="myCanvas"></canvas> -->
         <input type="file" id="input-file" class="hide no-print"/>
         <button type="button" class="hide pull-left no-print" id="toggle-hide-translation">Show translation</button>
-        <div id="output" class="col-md-5">
+        <div id="output" class="">
           <!-- <img src="./10121.jpg" id="yay" draggable="true" width="50px" /> -->
         </div>
-        <div id="images-box" class="pull-right col-md-4 no-print">
-          <div class="input_div">
-              <input type="text" id="url" value="http://wsdecks.com/deck/2502/"/>
-          </div>
-            <div class="pull-right">
-                <input type="submit" id="send-url"/>
-                <button id="print-translation" >Print translation</button>
+        <div id="right-panel" class="no-print">
+            <div id="control-box" class="clearfix">
+                <div class="input_div">
+                    <input type="text" id="url" value="http://wsdecks.com/deck/2502/"/>
+                </div>
+                <div class="pull-right">
+                    <input type="submit" id="send-url"/>
+                    <button id="print-translation" >Print translation</button>
+                </div>
+                <br />
             </div>
-          <br />
         </div>
     </div>
 </body>

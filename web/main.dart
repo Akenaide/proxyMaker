@@ -64,7 +64,9 @@ addImage(event) {
 
 getCardImages() {
   InputElement url = querySelector("#url");
-  var output = querySelector('#images-box');
+  var control = querySelector('#right-panel');
+  DivElement output = new DivElement()
+    ..id = "images-box";
   HttpRequest.postFormData("/cardimages", {"url": url.value}).then(
       (HttpRequest response) {
     List parsedList = JSON.decode(response.response);
@@ -72,8 +74,8 @@ getCardImages() {
       var image = new ImageElement();
       image.src = url;
       output.append(image);
-    }
-    ;
+    };
+    control.append(output);
     querySelectorAll("#images-box img").onClick.listen((e) => addImage(e));
     // var parsedListe = [
     //   {

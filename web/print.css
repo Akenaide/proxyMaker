@@ -2,9 +2,16 @@
     .no-print {
         display: none !important;
     }
+
+    html body {
+    margin: 0px;
+    width: 100%;
+    }
+
     canvas {
+        border: 2px black solid;
         width: 60mm !important;
-        /*height: 85mm;*/
+        height: 85mm !important;
         margin-left: 1mm;
         margin-top: 2mm;
     }

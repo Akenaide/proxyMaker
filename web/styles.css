@@ -1,11 +1,41 @@
 @import url(https://fonts.googleapis.com/css?family=Roboto);
 
-html, body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    font-family: 'Roboto', sans-serif;
+@media screen {
+    html, body {
+        margin: 40px;
+        padding: 0;
+        font-family: 'Roboto', sans-serif;
+    }
+
+    .main {
+        display: grid;
+        margin: 0 auto;
+        grid-template-columns: 5fr 2fr;
+        grid-gap: 10px;
+    }
+
+    #images-box {
+        grid-template-columns: 1fr 1fr;
+        display: grid;
+    }
+
+    #images-box img {
+        width: 100%;
+        padding: 2px;
+    }
+
+    .translation-canvas {
+      position: absolute;
+      top: 0;
+    }
+
+    #output .image {
+        width: 33%;
+    }
+
+    #url {
+        width: 100%;
+    }
 }
 
 /*#input-dir {
@@ -27,19 +57,3 @@ html, body {
   color: #777;
 }*/
 
-#images-box img {
-    width: 200px;
-    margin-left: 3px;
-    margin-bottom: 3px;
-}
-.translation-canvas {
-  position: absolute;
-  top: 0;
-}
-#output .image {
-    width: 33%;
-}
-
-#url {
-    width: 100%;
-}
