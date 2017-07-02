@@ -4,6 +4,10 @@ description: An absolute bare-bones web app.
 #author: Your Name <email@example.com>
 #homepage: https://www.example.com
 
+web:
+    compiler:
+        debug: dartdevc
+
 environment:
   sdk: '>=1.0.0 <2.0.0'
 

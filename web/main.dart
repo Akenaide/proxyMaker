@@ -2,7 +2,7 @@
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
 import 'dart:html';
-import 'dart:svg' as svg;
+// import 'dart:svg' as svg;
 import 'dart:async';
 import 'dart:convert';
 
@@ -22,7 +22,8 @@ allowDrop(Event event) {
 }
 
 drag(MouseEvent event) {
-  event.dataTransfer.setData("text", event.target.id);
+  // event.dataTransfer.setData("text", event.target);
+  print("Not implemented anymore");
 }
 
 drop(MouseEvent event) {
@@ -31,45 +32,48 @@ drop(MouseEvent event) {
   CanvasElement canvas = event.target;
   CanvasRenderingContext2D context = canvas.getContext("2d");
   // CanvasElement sourceCanvas = querySelector(data);
-  CanvasElement sourceCanvas = querySelector("#"+data);
-  double finalHeight = sourceCanvas.height * (canvas.width / sourceCanvas.width);
-  context.drawImageScaled(sourceCanvas, 0, (canvas.height - powerHeight), canvas.width, finalHeight);
+  CanvasElement sourceCanvas = querySelector("#" + data);
+  double finalHeight =
+      sourceCanvas.height * (canvas.width / sourceCanvas.width);
+  context.drawImageScaled(sourceCanvas, 0, (canvas.height - powerHeight),
+      canvas.width, finalHeight);
 }
 
 addImage(event) {
-
-  var image = new ImageElement()
-    ..src = event.target.src;
+  var image = new ImageElement()..src = event.target.src;
 
   CanvasElement canvas = new CanvasElement()
-   ..classes.add("image")
-   ..onDragOver.listen((e) => allowDrop(e))
-   ..onDrop.listen((e) => drop(e));
+    ..classes.add("image")
+    ..onDragOver.listen((e) => allowDrop(e))
+    ..onDrop.listen((e) => drop(e));
 
-   image.onLoad.listen((e) {
+  image.onLoad.listen((e) {
     CanvasRenderingContext2D context = canvas.getContext("2d");
     canvas
       ..width = image.width
       ..height = image.height;
 
     context.drawImage(image, 0, 0);
-   });
-
+  });
 
   querySelector('#output').append(canvas);
-  querySelectorAll('#output canvas.image').onClick.listen((e) => removeImage(e));
+  querySelectorAll('#output canvas.image')
+      .onClick
+      .listen((e) => removeImage(e));
 }
 
 getCardImages() {
   InputElement url = querySelector("#url");
   var output = querySelector('#images-box');
-  HttpRequest.postFormData("/cardimages", {"url": url.value}).then((HttpRequest response) {
+  HttpRequest.postFormData("/cardimages", {"url": url.value}).then(
+      (HttpRequest response) {
     List parsedList = JSON.decode(response.response);
     for (var url in parsedList) {
       var image = new ImageElement();
       image.src = url;
       output.append(image);
-    };
+    }
+    ;
     querySelectorAll("#images-box img").onClick.listen((e) => addImage(e));
     // var parsedListe = [
     //   {
@@ -101,9 +105,7 @@ Future loadImages(List<ImageElement> imgs) {
   return Future.wait(imageFutures);
 }
 
-checkReturnLine (String text) {
-
-}
+checkReturnLine(String text) {}
 
 getLines(String text) {
   int maxlength = 40;
@@ -138,59 +140,59 @@ getLines(String text) {
   return lines;
 }
 
-initCanvas(List<Object> cards) {
-  var xmlSeria = new XmlSerializer();
-  for (var card in cards) {
-    // var cardJson = JSON.decode(card);
-    List<String> lines = getLines(card['Translation']);
-    var height = 20;
-    var cardJson = card;
-    CanvasElement canvas = new CanvasElement();
+//initCanvas(List<Object> cards) {
+//  var xmlSeria = new XmlSerializer();
+//  for (var card in cards) {
+//    // var cardJson = JSON.decode(card);
+//    List<String> lines = getLines(card['Translation']);
+//    var height = 20;
+//    var cardJson = card;
+//    CanvasElement canvas = new CanvasElement();
+//
+//    svg.SvgElement svgEl = new svg.SvgElement.tag("svg")
+//    ..id = cardJson['ID']
+//    ..classes.add("no-print");
+//
+//    for (var line in lines) {
+//      svg.TextElement tspan = new svg.TextElement()
+//        ..text = line;
+//      tspan.attributes = {
+//        'y' : height.toString(),
+//        'x': "10",
+//        'font-size': "12",
+//        "fill":"black"
+//      };
+//      height = height + 15;
+//      svgEl.append(tspan);
+//    }
+//    svgEl.attributes = {
+//      "width": "260",
+//      "height": height.toString(),
+//      "style": "background-color: white;"
+//    };
+//
+//    var svsString = xmlSeria.serializeToString(svgEl);
+//    var blop = new Blob([svsString], "image/svg+xml;charset=utf-8");
+//    var url = Url.createObjectUrl(blop);
+//    ImageElement img = new ImageElement()
+//      ..src = url;
+//
+//
+//    img.onLoad.listen((e) {
+//      canvas
+//        ..width = img.width
+//        ..height = img.height
+//        ..draggable = true
+//        ..id = card["ID"].replaceFirst("/", "")
+//        ..onDragStart.listen((e) => drag(e));
+//      CanvasRenderingContext2D context = canvas.getContext('2d');
+//      context.drawImage(img, 0, 0);
+//    });
+//    querySelector("#output").append(canvas);
+//  }
+//}
 
-    svg.SvgElement svgEl = new svg.SvgElement.tag("svg")
-    ..id = cardJson['ID']
-    ..classes.add("no-print");
-
-    for (var line in lines) {
-      svg.TextElement tspan = new svg.TextElement()
-        ..text = line;
-      tspan.attributes = {
-        'y' : height.toString(),
-        'x': "10",
-        'font-size': "12",
-        "fill":"black"
-      };
-      height = height + 15;
-      svgEl.append(tspan);
-    }
-    svgEl.attributes = {
-      "width": "260",
-      "height": height.toString(),
-      "style": "background-color: white;"
-    };
-
-    var svsString = xmlSeria.serializeToString(svgEl);
-    var blop = new Blob([svsString], "image/svg+xml;charset=utf-8");
-    var url = Url.createObjectUrl(blop);
-    ImageElement img = new ImageElement()
-      ..src = url;
-
-
-    img.onLoad.listen((e) {
-      canvas
-        ..width = img.width
-        ..height = img.height
-        ..draggable = true
-        ..id = card["ID"].replaceFirst("/", "")
-        ..onDragStart.listen((e) => drag(e));
-      CanvasRenderingContext2D context = canvas.getContext('2d');
-      context.drawImage(img, 0, 0);
-    });
-    querySelector("#output").append(canvas);
-  }
-}
-
-bindCanvas(CanvasElement canvas){
+bindCanvas(CanvasElement canvas) {
   List points = [];
   CanvasElement outCanvas = new CanvasElement();
   CanvasRenderingContext2D outContext = outCanvas.getContext('2d');
@@ -200,15 +202,16 @@ bindCanvas(CanvasElement canvas){
       outContext.clearRect(0, 0, outCanvas.width, outCanvas.height);
       Rectangle rect = new Rectangle.fromPoints(points[0], points[1]);
       outCanvas
-        ..attributes.addAll({"draggable": true})
+        ..attributes.addAll({"draggable": "true"})
         ..id = "yay"
         ..classes.add("no-print")
         // ..id = new DateTime.now().millisecondsSinceEpoch.toString()
         ..onDragStart.listen((e) => drag(e))
         ..width = rect.width
         ..height = rect.height;
-      outContext.drawImageToRect(canvas, new Rectangle(0, 0, rect.width, rect.height),
-        sourceRect: rect);
+      outContext.drawImageToRect(
+          canvas, new Rectangle(0, 0, rect.width, rect.height),
+          sourceRect: rect);
       points.clear();
       querySelector("#output").append(outCanvas);
       querySelector(".translation-canvas").classes.toggle("hide");
@@ -221,7 +224,10 @@ getPdfFile() {
   for (var file in input.files) {
     var reader = new FileReader();
     reader.onLoad.listen((e) {
-      HttpRequest.postFormData("/translationimages", {"file": reader.result, "filename": file.name}).then((HttpRequest response) {
+      HttpRequest.postFormData("/translationimages", {
+        "file": reader.result,
+        "filename": file.name
+      }).then((HttpRequest response) {
         List parsedList = JSON.decode(response.response);
         List images = [];
         CanvasElement canvas = new CanvasElement()
@@ -229,11 +235,11 @@ getPdfFile() {
           ..classes.add("hide")
           ..classes.add("no-print");
         for (var url in parsedList) {
-          ImageElement image = new ImageElement()
-            ..src = url;
+          ImageElement image = new ImageElement()..src = url;
           images.add(image);
-        };
-        initCanvas(images, canvas);
+        }
+        ;
+        // initCanvas(images, canvas);
 
         bindCanvas(canvas);
       });
@@ -245,7 +251,8 @@ getPdfFile() {
 printTranslation() {
   InputElement deckUrl = querySelector("#url");
 
-  HttpRequest.postFormData("/translationimages", {"url": deckUrl.value}).then((HttpRequest response) {
+  HttpRequest.postFormData("/translationimages", {"url": deckUrl.value}).then(
+      (HttpRequest response) {
     List parsedList = JSON.decode(response.response);
     for (var card in parsedList) {
       DivElement printDiv = new DivElement();
@@ -265,7 +272,9 @@ void main() {
   querySelector("#input-file").onChange.listen((e) => getPdfFile());
   querySelector("#send-url").onClick.listen((e) => getCardImages());
   querySelector("#print-translation").onClick.listen((e) => printTranslation());
-  querySelector("#toggle-hide-translation").onClick.listen((e) => toggleHideTranslation());
+  querySelector("#toggle-hide-translation")
+      .onClick
+      .listen((e) => toggleHideTranslation());
   // querySelector("#yay").onDragStart.listen((e) => drag(e));
 
   // CanvasElement canvas = querySelector('#myCanvas');
