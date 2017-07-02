@@ -39,3 +39,7 @@ html, body {
 #output .image {
     width: 33%;
 }
+
+#url {
+    width: 100%;
+}
