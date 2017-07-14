@@ -40,7 +40,7 @@ type siteConfig struct {
 	Filter string
 }
 
-type cardsConfig struct {
+type deckConfig struct {
 	Dir  string
 	Site siteConfig
 }
@@ -132,7 +132,7 @@ func getTranslationHotC(codesPath string) []cardStruc {
 	return translations
 }
 
-func getCardsConfig(link string) (cardsConfig, error) {
+func getDeckConfig(link string) (deckConfig, error) {
 	uid := ""
 	site := siteConfig{}
 
@@ -148,12 +148,12 @@ func getCardsConfig(link string) (cardsConfig, error) {
 		uid = filepath.Base(link)
 	}
 	dir := filepath.Join("static", site.Name, uid)
-	cardsConfig := cardsConfig{Dir: dir, Site: site}
+	deckConfig := deckConfig{Dir: dir, Site: site}
 	if site.Filter == "" {
-		return cardsConfig, fmt.Errorf("Url is not supported %v", link)
+		return deckConfig, fmt.Errorf("Url is not supported %v", link)
 	}
 
-	return cardsConfig, nil
+	return deckConfig, nil
 }
 
 func yytImages(w http.ResponseWriter, r *http.Request) {
@@ -194,6 +194,18 @@ func yytImages(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func cardimages(w http.ResponseWriter, r *http.Request) {
+	link := r.PostFormValue("url")
+	if link != "" {
+	}
+	doc, err := goquery.NewDocument(link)
+	if err != nil {
+		fmt.Println(err)
+	}
+	deckConfig, err := getDeckConfig(link)
+
+}
+
 func main() {
 	proxy := New("http://localhost:8080")
 	os.MkdirAll(filepath.Join("static", "yuyutei"), 0744)
@@ -203,11 +215,11 @@ func main() {
 
 	http.HandleFunc("/translationimages", func(w http.ResponseWriter, r *http.Request) {
 		link := r.PostFormValue("url")
-		cardsConfig, err := getCardsConfig(link)
+		deckConfig, err := getDeckConfig(link)
 		if err != nil {
 			fmt.Println(err)
 		}
-		result := getTranslationHotC(cardsConfig.Dir)
+		result := getTranslationHotC(deckConfig.Dir)
 		b, err := json.Marshal(result)
 		if err != nil {
 			fmt.Println(err)
@@ -269,27 +281,27 @@ func main() {
 		if link != "" {
 			doc, err := goquery.NewDocument(link)
 			imageURL := ""
-			cardsConfig, err := getCardsConfig(link)
+			deckConfig, err := getDeckConfig(link)
 
 			if err != nil {
 				fmt.Println(err)
 			}
-			if _, err := os.Stat(cardsConfig.Dir); os.IsNotExist(err) {
-				os.MkdirAll(cardsConfig.Dir, 0744)
-				doc.Find(cardsConfig.Site.Filter).Each(func(i int, s *goquery.Selection) {
+			if _, err := os.Stat(deckConfig.Dir); os.IsNotExist(err) {
+				os.MkdirAll(deckConfig.Dir, 0744)
+				doc.Find(deckConfig.Site.Filter).Each(func(i int, s *goquery.Selection) {
 					wg.Add(1)
 					val, _ := s.Attr("src")
-					if cardsConfig.Site.Name == "yuyutei" {
+					if deckConfig.Site.Name == "yuyutei" {
 						big := strings.Replace(val, "90_126", "front", 1)
 						imageURL = yuyuteiURL + big
-					} else if cardsConfig.Site.Name == "wsdeck" {
+					} else if deckConfig.Site.Name == "wsdeck" {
 						imageURL = wsDeckURL + val
 					}
 
 					go func(url string) {
 						defer wg.Done()
 						// fmt.Println("dir : ", dir)
-						fileName := filepath.Join(cardsConfig.Dir, path.Base(url))
+						fileName := filepath.Join(deckConfig.Dir, path.Base(url))
 						fileName = strings.Split(fileName, "?")[0]
 						out, err := os.Create(fileName)
 						if err != nil {
@@ -316,7 +328,7 @@ func main() {
 					}(imageURL)
 				})
 			} else {
-				files, err := ioutil.ReadDir(cardsConfig.Dir)
+				files, err := ioutil.ReadDir(deckConfig.Dir)
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -341,7 +353,7 @@ func main() {
 			}
 			wg.Wait()
 			fmt.Printf("Finish")
-			createCardsCodeFile(cardsConfig.Dir)
+			createCardsCodeFile(deckConfig.Dir)
 		}
 
 		b, err := json.Marshal(result)
