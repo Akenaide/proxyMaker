@@ -76,7 +76,7 @@ func convertToJpg(filePath string) {
 	err = cmd.Wait()
 }
 
-func createCardsCodeFile(dirPath string) (string, error) {
+func createCardsCodeFile(dirPath string, cardsID []string) (string, error) {
 	//TODO Do nothing if file exists
 	dirPath += "/"
 	out, err := os.Create(dirPath + "codes.txt")
@@ -85,18 +85,8 @@ func createCardsCodeFile(dirPath string) (string, error) {
 		fmt.Println(err)
 		return "", err
 	}
-	cardList, err := filepath.Glob(dirPath + "*.gif")
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
-	// PI/S40-056
-	for _, card := range cardList {
-		card = strings.Replace(card, dirPath, "", 1)
-		card = strings.Replace(card, "_", "-", 1)
-		card = strings.Replace(card, "_", "/", 1)
-		ex := strings.Split(card, ".")[0]
-		out.WriteString(ex + "\n")
+	for _, card := range cardsID {
+		out.WriteString(card + "\n")
 	}
 	return out.Name(), nil
 }
@@ -196,6 +186,9 @@ func yytImages(w http.ResponseWriter, r *http.Request) {
 
 func cardimages(w http.ResponseWriter, r *http.Request) {
 	link := r.PostFormValue("url")
+	cardIDs := []string{}
+	result := []string{}
+
 	if link != "" {
 	}
 	doc, err := goquery.NewDocument(link)
@@ -203,6 +196,39 @@ func cardimages(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 	deckConfig, err := getDeckConfig(link)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	doc.Find("div .wscard").Each(func(i int, s *goquery.Selection) {
+		cardID, exists := s.Attr("data-cardid")
+		if exists {
+			cardIDs = append(cardIDs, cardID)
+		}
+	})
+	os.MkdirAll(deckConfig.Dir, 0744)
+	createCardsCodeFile(deckConfig.Dir, cardIDs)
+	yytImages, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_image_urls.json"))
+	if yytErr != nil {
+		fmt.Println(yytErr)
+	}
+	var yytMap = map[string]string{}
+	json.Unmarshal(yytImages, &yytMap)
+	for _, card := range cardIDs {
+		fmt.Println(card)
+		cardURL, has := yytMap[card]
+		if has {
+			urlPath := yuyuteiURL + cardURL
+			result = append(result, urlPath)
+		}
+	}
+	b, err := json.Marshal(result)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.Write(b)
 
 }
 
@@ -272,7 +298,8 @@ func main() {
 		w.Write(b)
 	})
 
-	http.HandleFunc("/cardimages", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/cardimages", cardimages)
+	http.HandleFunc("/cardimages_old", func(w http.ResponseWriter, r *http.Request) {
 		var wg sync.WaitGroup
 
 		result := []string{}
@@ -353,7 +380,7 @@ func main() {
 			}
 			wg.Wait()
 			fmt.Printf("Finish")
-			createCardsCodeFile(deckConfig.Dir)
+			// createCardsCodeFile(deckConfig.Dir)
 		}
 
 		b, err := json.Marshal(result)
