@@ -2,11 +2,11 @@
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
 import 'dart:html';
-// import 'dart:svg' as svg;
 import 'dart:async';
 import 'dart:convert';
 
 final int powerHeight = 90;
+DivElement spinner;
 
 removeImage(event) {
   event.target.remove();
@@ -63,10 +63,10 @@ addImage(event) {
 }
 
 getCardImages() {
+  spinner.classes.toggle("hide");
   InputElement url = querySelector("#url");
   var control = querySelector('#right-panel');
-  DivElement output = new DivElement()
-    ..id = "images-box";
+  DivElement output = new DivElement()..id = "images-box";
   HttpRequest.postFormData("/cardimages", {"url": url.value}).then(
       (HttpRequest response) {
     List parsedList = JSON.decode(response.response);
@@ -74,26 +74,11 @@ getCardImages() {
       var image = new ImageElement();
       image.src = url;
       output.append(image);
-    };
+    }
+    ;
     control.append(output);
     querySelectorAll("#images-box img").onClick.listen((e) => addImage(e));
-    // var parsedListe = [
-    //   {
-    //     "ID":"PY-S38/005R",
-    //     "Translation":"[C] Your other Character in the Front Row Center Slot gains +500 Power.\n[S] \u003cb\u003eBRAINSTORM\u003c/b\u003e [(1) Rest 2 of your Characters] Flip over the top 4 cards of your Library and put them in the Waiting Room. For each Climax card revealed this way, search your Library for up to 1 ::Puyo:: Character, reveal it, put it in your hand, and shuffle your Library. "
-    //   },
-    //   {
-    //     "ID":"PY-S38/005R",
-    //     "Translation":"[C] Your other Character in the Front Row Center Slot gains +500 Power.\n[S] \u003cb\u003eBRAINSTORM\u003c/b\u003e [(1) Rest 2 of your Characters] Flip over the top 4 cards of your Library and put them in the Waiting Room. For each Climax card revealed this way, search your Library for up to 1 ::Puyo:: Character, reveal it, put it in your hand, and shuffle your Library. "
-    //   },
-    //   {"ID":"PY-S38/T18","Translation":"\u003cb\u003eBRAINSTORM\u003c/b\u003e Choose a Character in your Waiting Room and return it to your hand. Flip over the top 3 cards of your Library and put them in your Waiting Room. If at least 1 Climax card was revealed this way, choose a Character in your Waiting Room and return it to your hand. "}
-    // ];
-    // initCanvas(parsedListe);
-
-    // HttpRequest.postFormData("/translationimages", {"url": url.value}).then((HttpRequest response) {
-    //   List parsedList = JSON.decode(response.response);
-    //   initCanvas(parsedList);
-    // });
+    spinner.classes.toggle("hide");
   });
 }
 
@@ -141,58 +126,6 @@ getLines(String text) {
   }
   return lines;
 }
-
-//initCanvas(List<Object> cards) {
-//  var xmlSeria = new XmlSerializer();
-//  for (var card in cards) {
-//    // var cardJson = JSON.decode(card);
-//    List<String> lines = getLines(card['Translation']);
-//    var height = 20;
-//    var cardJson = card;
-//    CanvasElement canvas = new CanvasElement();
-//
-//    svg.SvgElement svgEl = new svg.SvgElement.tag("svg")
-//    ..id = cardJson['ID']
-//    ..classes.add("no-print");
-//
-//    for (var line in lines) {
-//      svg.TextElement tspan = new svg.TextElement()
-//        ..text = line;
-//      tspan.attributes = {
-//        'y' : height.toString(),
-//        'x': "10",
-//        'font-size': "12",
-//        "fill":"black"
-//      };
-//      height = height + 15;
-//      svgEl.append(tspan);
-//    }
-//    svgEl.attributes = {
-//      "width": "260",
-//      "height": height.toString(),
-//      "style": "background-color: white;"
-//    };
-//
-//    var svsString = xmlSeria.serializeToString(svgEl);
-//    var blop = new Blob([svsString], "image/svg+xml;charset=utf-8");
-//    var url = Url.createObjectUrl(blop);
-//    ImageElement img = new ImageElement()
-//      ..src = url;
-//
-//
-//    img.onLoad.listen((e) {
-//      canvas
-//        ..width = img.width
-//        ..height = img.height
-//        ..draggable = true
-//        ..id = card["ID"].replaceFirst("/", "")
-//        ..onDragStart.listen((e) => drag(e));
-//      CanvasRenderingContext2D context = canvas.getContext('2d');
-//      context.drawImage(img, 0, 0);
-//    });
-//    querySelector("#output").append(canvas);
-//  }
-//}
 
 bindCanvas(CanvasElement canvas) {
   List points = [];
@@ -251,6 +184,7 @@ getPdfFile() {
 }
 
 printTranslation() {
+  spinner.classes.toggle("hide");
   InputElement deckUrl = querySelector("#url");
 
   HttpRequest.postFormData("/translationimages", {"url": deckUrl.value}).then(
@@ -267,6 +201,7 @@ printTranslation() {
 
       querySelector('#output').append(printDiv);
     }
+    spinner.classes.toggle("hide");
   });
 }
 
@@ -277,6 +212,7 @@ void main() {
   querySelector("#toggle-hide-translation")
       .onClick
       .listen((e) => toggleHideTranslation());
+  spinner = querySelector("#spinner");
   // querySelector("#yay").onDragStart.listen((e) => drag(e));
 
   // CanvasElement canvas = querySelector('#myCanvas');
