@@ -56,6 +56,11 @@ type cardDeckInfo struct {
 	Amount int
 }
 
+type cardPrice struct {
+	ID    string
+	Price int
+}
+
 type YytInfo struct {
 	URL   string
 	Price int
@@ -160,6 +165,53 @@ func getDeckConfig(link string) (deckConfig, error) {
 	return deckConfig, nil
 }
 
+func getCardInfos(codesPath string) []cardDeckInfo {
+	fmt.Println("getCardInfos")
+	file, err := os.Open(codesPath + "/codes.txt")
+	cardsDeck := []cardDeckInfo{}
+	scanner := bufio.NewScanner(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+	for scanner.Scan() {
+		json.Unmarshal(scanner.Bytes(), &cardsDeck)
+	}
+	return cardsDeck
+}
+
+func estimatePrice(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("estimatePrice")
+	var yytMap = map[string]YytInfo{}
+	var result = []cardPrice{}
+	var link = r.PostFormValue("url")
+	var total int
+
+	deckConfig, err := getDeckConfig(link)
+	if err != nil {
+		fmt.Println(err)
+	}
+	yytInfos, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_infos.json"))
+	if yytErr != nil {
+		fmt.Println(yytErr)
+	}
+	json.Unmarshal(yytInfos, &yytMap)
+
+	cardsInfo := getCardInfos(deckConfig.Dir)
+
+	for _, card := range cardsInfo {
+		var price int = card.Amount * yytMap[card.ID].Price
+		total = total + price
+		result = append(result, cardPrice{ID: card.ID, Price: price})
+	}
+
+	result = append(result, cardPrice{ID: "TOTAL", Price: total})
+	b, err := json.Marshal(result)
+	if err != nil {
+		fmt.Println(err)
+	}
+	w.Write(b)
+}
+
 func yytInfos(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("yytImage")
 	out, err := os.Create(filepath.Join("static", "yyt_infos.json"))
@@ -246,12 +298,12 @@ func cardimages(w http.ResponseWriter, r *http.Request) {
 	if yytErr != nil {
 		fmt.Println(yytErr)
 	}
-	var yytMap = map[string]string{}
+	var yytMap = map[string]YytInfo{}
 	json.Unmarshal(yytInfos, &yytMap)
 	for _, card := range cardIDs {
-		cardURL, has := yytMap[card.ID]
+		card, has := yytMap[card.ID]
 		if has {
-			urlPath := yuyuteiURL + cardURL
+			urlPath := yuyuteiURL + card.URL
 			result = append(result, urlPath)
 		}
 	}
@@ -426,6 +478,7 @@ func main() {
 	})
 
 	http.HandleFunc("/update_yyt_infos", yytInfos)
+	http.HandleFunc("/estimateprice", estimatePrice)
 
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println("static", r.URL.Path[1:])

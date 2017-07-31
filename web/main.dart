@@ -205,10 +205,34 @@ printTranslation() {
   });
 }
 
+estimatePrice() {
+  spinner.classes.toggle("hide");
+  InputElement deckUrl = querySelector("#url");
+
+  HttpRequest.postFormData("/estimateprice", {"url": deckUrl.value}).then(
+      (HttpRequest response) {
+    List parsedList = JSON.decode(response.response);
+    for (var card in parsedList) {
+      DivElement printDiv = new DivElement();
+      Element cardId = new Element.tag("h3");
+      ParagraphElement translation = new ParagraphElement();
+
+      translation.appendText(card["Price"].toString());
+      cardId.appendText(card["ID"]);
+      printDiv.append(cardId);
+      printDiv.append(translation);
+
+      querySelector('#output').append(printDiv);
+    }
+    spinner.classes.toggle("hide");
+  });
+}
+
 void main() {
   querySelector("#input-file").onChange.listen((e) => getPdfFile());
   querySelector("#send-url").onClick.listen((e) => getCardImages());
   querySelector("#print-translation").onClick.listen((e) => printTranslation());
+  querySelector("#estimate-price").onClick.listen((e) => estimatePrice());
   querySelector("#toggle-hide-translation")
       .onClick
       .listen((e) => toggleHideTranslation());
