@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -50,6 +51,11 @@ type cardStruc struct {
 	Translation string
 }
 
+type cardDeckInfo struct {
+	ID     string
+	Amount int
+}
+
 // New proxy
 func New(target string) *Prox {
 	url, _ := url.Parse(target)
@@ -76,7 +82,7 @@ func convertToJpg(filePath string) {
 	err = cmd.Wait()
 }
 
-func createCardsCodeFile(dirPath string, cardsID []string) (string, error) {
+func createCardsCodeFile(dirPath string, cardsID []cardDeckInfo) (string, error) {
 	//TODO Do nothing if file exists
 	dirPath += "/"
 	out, err := os.Create(dirPath + "codes.txt")
@@ -85,9 +91,11 @@ func createCardsCodeFile(dirPath string, cardsID []string) (string, error) {
 		fmt.Println(err)
 		return "", err
 	}
-	for _, card := range cardsID {
-		out.WriteString(card + "\n")
+	b, errMarshal := json.Marshal(cardsID)
+	if errMarshal != nil {
+		fmt.Println(errMarshal)
 	}
+	out.WriteString(string(b))
 	return out.Name(), nil
 }
 
@@ -101,23 +109,24 @@ func getTranslationHotC(codesPath string) []cardStruc {
 	fmt.Println("getTranslationHotC")
 	for scanner.Scan() {
 		// fmt.Println(scanner.Text())
-		url := hoTcURL + scanner.Text()
-		fmt.Println(url)
-		doc, err := goquery.NewDocument(url)
-		if err != nil {
-			fmt.Println(err)
-		}
-		textHTML, err := doc.Find(".cards3").Slice(2, 3).Html()
-		if err != nil {
-			fmt.Println(err)
-		}
-		textHTML = strings.Replace(textHTML, "<br/>", "&#10;", -1)
-		// html.UnescapeString(textHTML)
-		card := cardStruc{ID: scanner.Text(), Translation: html.UnescapeString(textHTML)}
+		cardsDeck := []cardDeckInfo{}
+		json.Unmarshal(scanner.Bytes(), &cardsDeck)
+		for _, cardDeck := range cardsDeck {
+			url := hoTcURL + cardDeck.ID
+			fmt.Println(url)
+			doc, err := goquery.NewDocument(url)
+			if err != nil {
+				fmt.Println(err)
+			}
+			textHTML, err := doc.Find(".cards3").Slice(2, 3).Html()
+			if err != nil {
+				fmt.Println(err)
+			}
+			textHTML = strings.Replace(textHTML, "<br/>", "&#10;", -1)
+			card := cardStruc{ID: cardDeck.ID, Translation: html.UnescapeString(textHTML)}
 
-		translations = append(translations, card)
-		// json.Marshal(card)
-		// doc.Find(".card3").Get(2)
+			translations = append(translations, card)
+		}
 	}
 	return translations
 }
@@ -186,7 +195,7 @@ func yytImages(w http.ResponseWriter, r *http.Request) {
 
 func cardimages(w http.ResponseWriter, r *http.Request) {
 	link := r.PostFormValue("url")
-	cardIDs := []string{}
+	cardIDs := []cardDeckInfo{}
 	result := []string{}
 
 	if link != "" {
@@ -201,10 +210,20 @@ func cardimages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	doc.Find("div .wscard").Each(func(i int, s *goquery.Selection) {
+		card := cardDeckInfo{}
 		cardID, exists := s.Attr("data-cardid")
 		if exists {
-			cardIDs = append(cardIDs, cardID)
+			card.ID = cardID
 		}
+
+		cardAmount, exists := s.Attr("data-amount")
+		if exists {
+			card.Amount, err = strconv.Atoi(cardAmount)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+		cardIDs = append(cardIDs, card)
 	})
 	os.MkdirAll(deckConfig.Dir, 0744)
 	createCardsCodeFile(deckConfig.Dir, cardIDs)
@@ -215,8 +234,7 @@ func cardimages(w http.ResponseWriter, r *http.Request) {
 	var yytMap = map[string]string{}
 	json.Unmarshal(yytImages, &yytMap)
 	for _, card := range cardIDs {
-		fmt.Println(card)
-		cardURL, has := yytMap[card]
+		cardURL, has := yytMap[card.ID]
 		if has {
 			urlPath := yuyuteiURL + cardURL
 			result = append(result, urlPath)
