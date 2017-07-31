@@ -56,6 +56,11 @@ type cardDeckInfo struct {
 	Amount int
 }
 
+type YytInfo struct {
+	URL   string
+	Price int
+}
+
 // New proxy
 func New(target string) *Prox {
 	url, _ := url.Parse(target)
@@ -155,12 +160,12 @@ func getDeckConfig(link string) (deckConfig, error) {
 	return deckConfig, nil
 }
 
-func yytImages(w http.ResponseWriter, r *http.Request) {
+func yytInfos(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("yytImage")
-	out, err := os.Create(filepath.Join("static", "yyt_image_urls.json"))
+	out, err := os.Create(filepath.Join("static", "yyt_infos.json"))
 	var buffer bytes.Buffer
 	defer out.Close()
-	cardMap := map[string]string{}
+	cardMap := map[string]YytInfo{}
 	filter := "ul[data-class=sell] .item_single_card .nav_list_second .nav_list_third a"
 	doc, err := goquery.NewDocument(yuyuteiBase)
 
@@ -174,9 +179,19 @@ func yytImages(w http.ResponseWriter, r *http.Request) {
 		if has {
 			images, errCard := goquery.NewDocument(yuyuteiURL + url)
 			images.Find(".card_unit").Each(func(cardI int, cardS *goquery.Selection) {
+				var price string
+				price = cardS.Find(".price .sale").Text()
+				if price == "" {
+					price = strings.TrimSpace(cardS.Find(".price").Text())
+				}
+				cardPrice, errAtoi := strconv.Atoi(strings.TrimSuffix(price, "円"))
+				if errAtoi != nil {
+					fmt.Println(errAtoi)
+				}
 				cardURL, _ := cardS.Find(".image img").Attr("src")
 				cardURL = strings.Replace(cardURL, "90_126", "front", 1)
-				cardMap[strings.TrimSpace(cardS.Find(".id").Text())] = cardURL
+				yytInfo := YytInfo{URL: cardURL, Price: cardPrice}
+				cardMap[strings.TrimSpace(cardS.Find(".id").Text())] = yytInfo
 			})
 			if errCard != nil {
 				fmt.Println(errCard)
@@ -227,12 +242,12 @@ func cardimages(w http.ResponseWriter, r *http.Request) {
 	})
 	os.MkdirAll(deckConfig.Dir, 0744)
 	createCardsCodeFile(deckConfig.Dir, cardIDs)
-	yytImages, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_image_urls.json"))
+	yytInfos, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_infos.json"))
 	if yytErr != nil {
 		fmt.Println(yytErr)
 	}
 	var yytMap = map[string]string{}
-	json.Unmarshal(yytImages, &yytMap)
+	json.Unmarshal(yytInfos, &yytMap)
 	for _, card := range cardIDs {
 		cardURL, has := yytMap[card.ID]
 		if has {
@@ -377,12 +392,12 @@ func main() {
 				if err != nil {
 					fmt.Println(err)
 				}
-				yytImages, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_image_urls.json"))
+				yytInfos, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_infos.json"))
 				if yytErr != nil {
 					fmt.Println(yytErr)
 				}
 				var yytMap = map[string]string{}
-				json.Unmarshal(yytImages, &yytMap)
+				json.Unmarshal(yytInfos, &yytMap)
 				for _, file := range files {
 					cardID := strings.Replace(file.Name(), "_", "/", 1)
 					cardID = strings.Replace(cardID, "_", "-", 1)
@@ -410,7 +425,7 @@ func main() {
 		w.Write(b)
 	})
 
-	http.HandleFunc("/update_yyt_images", yytImages)
+	http.HandleFunc("/update_yyt_infos", yytInfos)
 
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println("static", r.URL.Path[1:])
