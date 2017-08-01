@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -94,6 +93,7 @@ func convertToJpg(filePath string) {
 
 func createCardsCodeFile(dirPath string, cardsID []cardDeckInfo) (string, error) {
 	//TODO Do nothing if file exists
+	os.MkdirAll(dirPath, 0744)
 	dirPath += "/"
 	out, err := os.Create(dirPath + "codes.txt")
 	defer out.Close()
@@ -109,36 +109,37 @@ func createCardsCodeFile(dirPath string, cardsID []cardDeckInfo) (string, error)
 	return out.Name(), nil
 }
 
-func getTranslationHotC(codesPath string) []cardStruc {
+func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("getTranslationHotC")
+
 	translations := []cardStruc{}
-	file, err := os.Open(codesPath + "/codes.txt")
-	scanner := bufio.NewScanner(file)
+	cardsInfo, errGetCardDeckInfo := getCardDeckInfo(r.PostFormValue("url"))
+	if errGetCardDeckInfo != nil {
+		fmt.Println(errGetCardDeckInfo)
+	}
+
+	for _, card := range cardsInfo {
+		url := hoTcURL + card.ID
+		fmt.Println(url)
+		doc, err := goquery.NewDocument(url)
+		if err != nil {
+			fmt.Println(err)
+		}
+		textHTML, err := doc.Find(".cards3").Slice(2, 3).Html()
+		if err != nil {
+			fmt.Println(err)
+		}
+		textHTML = strings.Replace(textHTML, "<br/>", "&#10;", -1)
+		card := cardStruc{ID: card.ID, Translation: html.UnescapeString(textHTML)}
+
+		translations = append(translations, card)
+	}
+
+	b, err := json.Marshal(translations)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("getTranslationHotC")
-	for scanner.Scan() {
-		// fmt.Println(scanner.Text())
-		cardsDeck := []cardDeckInfo{}
-		json.Unmarshal(scanner.Bytes(), &cardsDeck)
-		for _, cardDeck := range cardsDeck {
-			url := hoTcURL + cardDeck.ID
-			fmt.Println(url)
-			doc, err := goquery.NewDocument(url)
-			if err != nil {
-				fmt.Println(err)
-			}
-			textHTML, err := doc.Find(".cards3").Slice(2, 3).Html()
-			if err != nil {
-				fmt.Println(err)
-			}
-			textHTML = strings.Replace(textHTML, "<br/>", "&#10;", -1)
-			card := cardStruc{ID: cardDeck.ID, Translation: html.UnescapeString(textHTML)}
-
-			translations = append(translations, card)
-		}
-	}
-	return translations
+	w.Write(b)
 }
 
 func getDeckConfig(link string) (deckConfig, error) {
@@ -165,38 +166,51 @@ func getDeckConfig(link string) (deckConfig, error) {
 	return deckConfig, nil
 }
 
-func getCardInfos(codesPath string) []cardDeckInfo {
-	fmt.Println("getCardInfos")
-	file, err := os.Open(codesPath + "/codes.txt")
-	cardsDeck := []cardDeckInfo{}
-	scanner := bufio.NewScanner(file)
+func getCardDeckInfo(url string) ([]cardDeckInfo, error) {
+	fmt.Println("getCardDeckInfo")
+
+	var cardsDeck = []cardDeckInfo{}
+
+	doc, err := goquery.NewDocument(url)
 	if err != nil {
 		fmt.Println(err)
+		return cardsDeck, err
 	}
-	for scanner.Scan() {
-		json.Unmarshal(scanner.Bytes(), &cardsDeck)
-	}
-	return cardsDeck
+	doc.Find("div .wscard").Each(func(i int, s *goquery.Selection) {
+		card := cardDeckInfo{}
+		cardID, exists := s.Attr("data-cardid")
+		if exists {
+			card.ID = cardID
+		}
+
+		cardAmount, exists := s.Attr("data-amount")
+		if exists {
+			card.Amount, err = strconv.Atoi(cardAmount)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+		cardsDeck = append(cardsDeck, card)
+	})
+	return cardsDeck, nil
 }
 
 func estimatePrice(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("estimatePrice")
 	var yytMap = map[string]YytInfo{}
 	var result = []cardPrice{}
-	var link = r.PostFormValue("url")
 	var total int
 
-	deckConfig, err := getDeckConfig(link)
-	if err != nil {
-		fmt.Println(err)
+	cardsInfo, errGetCardDeckInfo := getCardDeckInfo(r.PostFormValue("url"))
+	if errGetCardDeckInfo != nil {
+		fmt.Println(errGetCardDeckInfo)
 	}
+
 	yytInfos, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_infos.json"))
 	if yytErr != nil {
 		fmt.Println(yytErr)
 	}
 	json.Unmarshal(yytInfos, &yytMap)
-
-	cardsInfo := getCardInfos(deckConfig.Dir)
 
 	for _, card := range cardsInfo {
 		var price int = card.Amount * yytMap[card.ID].Price
@@ -261,46 +275,30 @@ func yytInfos(w http.ResponseWriter, r *http.Request) {
 }
 
 func cardimages(w http.ResponseWriter, r *http.Request) {
-	link := r.PostFormValue("url")
-	cardIDs := []cardDeckInfo{}
-	result := []string{}
+	var link = r.PostFormValue("url")
+	var cardsDeck = []cardDeckInfo{}
+	var result = []string{}
+	var yytMap = map[string]YytInfo{}
 
 	if link != "" {
 	}
-	doc, err := goquery.NewDocument(link)
-	if err != nil {
-		fmt.Println(err)
+	cardsDeck, errGetCardDeckInfo := getCardDeckInfo(link)
+	if errGetCardDeckInfo != nil {
+		fmt.Println(errGetCardDeckInfo)
 	}
+
 	deckConfig, err := getDeckConfig(link)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	doc.Find("div .wscard").Each(func(i int, s *goquery.Selection) {
-		card := cardDeckInfo{}
-		cardID, exists := s.Attr("data-cardid")
-		if exists {
-			card.ID = cardID
-		}
-
-		cardAmount, exists := s.Attr("data-amount")
-		if exists {
-			card.Amount, err = strconv.Atoi(cardAmount)
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		cardIDs = append(cardIDs, card)
-	})
-	os.MkdirAll(deckConfig.Dir, 0744)
-	createCardsCodeFile(deckConfig.Dir, cardIDs)
+	createCardsCodeFile(deckConfig.Dir, cardsDeck)
 	yytInfos, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_infos.json"))
 	if yytErr != nil {
 		fmt.Println(yytErr)
 	}
-	var yytMap = map[string]YytInfo{}
 	json.Unmarshal(yytInfos, &yytMap)
-	for _, card := range cardIDs {
+	for _, card := range cardsDeck {
 		card, has := yytMap[card.ID]
 		if has {
 			urlPath := yuyuteiURL + card.URL
@@ -324,19 +322,7 @@ func main() {
 	// static := http.FileServer(http.Dir("./"))
 	http.HandleFunc("/", proxy.handle)
 
-	http.HandleFunc("/translationimages", func(w http.ResponseWriter, r *http.Request) {
-		link := r.PostFormValue("url")
-		deckConfig, err := getDeckConfig(link)
-		if err != nil {
-			fmt.Println(err)
-		}
-		result := getTranslationHotC(deckConfig.Dir)
-		b, err := json.Marshal(result)
-		if err != nil {
-			fmt.Println(err)
-		}
-		w.Write(b)
-	})
+	http.HandleFunc("/translationimages", getTranslationHotC)
 
 	http.HandleFunc("/translationimages_old", func(w http.ResponseWriter, r *http.Request) {
 		file := r.PostFormValue("file")
