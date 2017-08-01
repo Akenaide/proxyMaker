@@ -208,22 +208,28 @@ printTranslation() {
 estimatePrice() {
   spinner.classes.toggle("hide");
   InputElement deckUrl = querySelector("#url");
+  TableElement table = new TableElement();
+  table.classes.add("table");
+  table.classes.add("table-bordered");
+  TableSectionElement tbody = table.createTBody();
+  TableSectionElement thead = table.createTHead();
+  TableRowElement headRow = thead.addRow();
+  headRow.addCell().text = "ID";
+  headRow.addCell().text = "Price";
+  headRow.addCell().text = "Amount";
+  headRow.addCell().text = "Total";
 
   HttpRequest.postFormData("/estimateprice", {"url": deckUrl.value}).then(
       (HttpRequest response) {
     List parsedList = JSON.decode(response.response);
     for (var card in parsedList) {
-      DivElement printDiv = new DivElement();
-      Element cardId = new Element.tag("h3");
-      ParagraphElement translation = new ParagraphElement();
-
-      translation.appendText(card["Price"].toString());
-      cardId.appendText(card["ID"]);
-      printDiv.append(cardId);
-      printDiv.append(translation);
-
-      querySelector('#output').append(printDiv);
+      TableRowElement row = tbody.addRow();
+      row.addCell().text = card["ID"];
+      row.addCell().text = card["Price"].toString();
+      row.addCell().text = card["Amount"].toString();
+      row.addCell().text = card["Total"].toString();
     }
+    querySelector('#output').append(table);
     spinner.classes.toggle("hide");
   });
 }
