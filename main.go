@@ -55,16 +55,12 @@ type cardDeckInfo struct {
 	Amount int
 }
 
-type cardPrice struct {
-	ID     string
+type YytInfo struct {
+	URL    string
 	Price  int
+	ID     string
 	Amount int
 	Total  int
-}
-
-type YytInfo struct {
-	URL   string
-	Price int
 }
 
 // New proxy
@@ -200,7 +196,7 @@ func getCardDeckInfo(url string) ([]cardDeckInfo, error) {
 func estimatePrice(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("estimatePrice")
 	var yytMap = map[string]YytInfo{}
-	var result = []cardPrice{}
+	var result = []YytInfo{}
 	var deckPrice int
 
 	cardsInfo, errGetCardDeckInfo := getCardDeckInfo(r.PostFormValue("url"))
@@ -217,15 +213,16 @@ func estimatePrice(w http.ResponseWriter, r *http.Request) {
 	for _, card := range cardsInfo {
 		var total int = card.Amount * yytMap[card.ID].Price
 		deckPrice = deckPrice + total
-		result = append(result, cardPrice{
+		result = append(result, YytInfo{
 			ID:     card.ID,
 			Price:  yytMap[card.ID].Price,
 			Amount: card.Amount,
+			URL:    yuyuteiURL + yytMap[card.ID].URL,
 			Total:  total},
 		)
 	}
 
-	result = append(result, cardPrice{ID: "TOTAL", Price: deckPrice})
+	result = append(result, YytInfo{ID: "TOTAL", Price: deckPrice})
 	b, err := json.Marshal(result)
 	if err != nil {
 		fmt.Println(err)

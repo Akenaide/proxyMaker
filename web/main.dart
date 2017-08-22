@@ -215,6 +215,7 @@ estimatePrice() {
   TableSectionElement thead = table.createTHead();
   TableRowElement headRow = thead.addRow();
   headRow.addCell().text = "ID";
+  headRow.addCell().text = "Image";
   headRow.addCell().text = "Price";
   headRow.addCell().text = "Amount";
   headRow.addCell().text = "Total";
@@ -224,8 +225,11 @@ estimatePrice() {
     List parsedList = JSON.decode(response.response);
     parsedList.sort((a, b) => a["ID"].compareTo(b["ID"]));
     for (var card in parsedList) {
+      ImageElement image = new ImageElement(src: card["URL"]);
+      image.classes.add("estimate__image");
       TableRowElement row = tbody.addRow();
       row.addCell().text = card["ID"];
+      row.addCell().children = [image];
       row.addCell().text = card["Price"].toString();
       row.addCell().text = card["Amount"].toString();
       row.addCell().text = card["Total"].toString();
