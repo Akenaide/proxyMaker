@@ -222,6 +222,7 @@ estimatePrice() {
   HttpRequest.postFormData("/estimateprice", {"url": deckUrl.value}).then(
       (HttpRequest response) {
     List parsedList = JSON.decode(response.response);
+    parsedList.sort((a, b) => a["ID"].compareTo(b["ID"]));
     for (var card in parsedList) {
       TableRowElement row = tbody.addRow();
       row.addCell().text = card["ID"];
