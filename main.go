@@ -107,17 +107,24 @@ func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, card := range cardsInfo {
-		url := hoTcURL + card.ID
+		url := hoTcURL + card.ID + "&short=1"
 		fmt.Println(url)
 		doc, err := goquery.NewDocument(url)
 		if err != nil {
 			fmt.Println(err)
 		}
-		textHTML, err := doc.Find(".cards3").Slice(2, 3).Html()
+		doc.Find("img")
+		textHTML, err := doc.Find("body").Html()
 		if err != nil {
 			fmt.Println(err)
 		}
-		textHTML = strings.Replace(textHTML, "<br/>", "&#10;", -1)
+		// textHTML, err := doc.Find(".cards3").Slice(2, 3).Html()
+		// if err != nil {
+		// 	fmt.Println(err)
+		// }
+
+		// textHTML = strings.Replace(textHTML, "<br/>", "&#10;", -1)
+		textHTML = strings.Replace(textHTML, "/heartofthecards", "http://www.heartofthecards.com/heartofthecards", -1)
 		card.Translation = html.UnescapeString(textHTML)
 
 		translations = append(translations, card)
