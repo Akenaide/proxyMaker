@@ -232,7 +232,7 @@ estimatePrice() {
       row.addCell().children = [image];
       row.addCell().text = card["Price"].toString();
       row.addCell().text = card["Amount"].toString();
-      row.addCell().text = card["Total"].toString();
+      row.addCell().text = (card["Price"] * card["Amount"]).toString();
     }
     querySelector('#output').append(table);
     spinner.classes.toggle("hide");
