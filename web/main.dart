@@ -12,6 +12,20 @@ removeImage(event) {
   event.target.remove();
 }
 
+class myNodeValidator implements NodeValidator {
+    final NodeValidator _nodeValidator;
+    bool allowsAttribute(Element element, String attributeName, String value) {
+        return true;
+    }
+
+    bool allowsElement(Element element) => true;
+
+    myNodeValidator():
+        _nodeValidator = new NodeValidator();
+}
+
+NodeValidator validator = new myNodeValidator();
+
 void toggleHideTranslation() {
   CanvasElement canvas = querySelector(".translation-canvas");
   canvas.classes.toggle("hide");
@@ -192,17 +206,35 @@ printTranslation() {
     List parsedList = JSON.decode(response.response);
     for (var card in parsedList) {
       DivElement printDiv = new DivElement();
-      Element cardId = new Element.tag("h3");
       ParagraphElement translation = new ParagraphElement();
-      translation.appendHtml(card["Translation"].replaceAll("\n", "<br>"));
-      cardId.appendText(card["ID"]);
-      printDiv.append(cardId);
+      translation.appendHtml(card["Translation"].replaceAll("\u21b5", ""), validator: validator);
+      ImageElement image = translation.querySelector("img");
+      image
+          ..src = card["URL"]
+          ..classes.add("mini-image");
       printDiv.append(translation);
 
       querySelector('#output').append(printDiv);
     }
     spinner.classes.toggle("hide");
   });
+}
+
+printTranslationb() {
+  spinner.classes.toggle("hide");
+  InputElement deckUrl = querySelector("#url");
+
+  DivElement printDiv = new DivElement();
+  Element cardId = new Element.tag("h3");
+  ParagraphElement translation = new ParagraphElement();
+  var text = test.replaceAll("\u21b5", "");
+  translation.appendHtml(text, validator: validator);
+  // cardId.appendText(card["ID"]);
+  // printDiv.append(cardId);
+  printDiv.append(translation);
+
+  querySelector('#output').append(printDiv);
+  spinner.classes.toggle("hide");
 }
 
 estimatePrice() {

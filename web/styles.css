@@ -22,6 +22,10 @@
         max-width: 250px;
     }
 
+    .mini-image {
+        width: 150px;
+    }
+
     #images-box {
         grid-template-columns: 1fr 1fr;
         display: grid;

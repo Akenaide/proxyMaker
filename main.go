@@ -27,6 +27,8 @@ const wsDeckURL = "https://wsdecks.com"
 const hoTcURL = "http://www.heartofthecards.com/code/cardlist.html?card=WS_"
 const yuyuteiBase = "http://yuyu-tei.jp/game_ws"
 
+var yytMap = map[string]card{}
+
 // Prox struct
 type Prox struct {
 	// target url of reverse proxy
@@ -113,19 +115,12 @@ func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Println(err)
 		}
-		doc.Find("img")
 		textHTML, err := doc.Find("body").Html()
 		if err != nil {
 			fmt.Println(err)
 		}
-		// textHTML, err := doc.Find(".cards3").Slice(2, 3).Html()
-		// if err != nil {
-		// 	fmt.Println(err)
-		// }
-
-		// textHTML = strings.Replace(textHTML, "<br/>", "&#10;", -1)
-		textHTML = strings.Replace(textHTML, "/heartofthecards", "http://www.heartofthecards.com/heartofthecards", -1)
 		card.Translation = html.UnescapeString(textHTML)
+		card.URL = yuyuteiURL + yytMap[card.ID].URL
 
 		translations = append(translations, card)
 	}
@@ -192,7 +187,6 @@ func getCardDeckInfo(url string) ([]card, error) {
 
 func estimatePrice(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("estimatePrice")
-	var yytMap = map[string]card{}
 	var result = []card{}
 	var deckPrice int
 
@@ -200,12 +194,6 @@ func estimatePrice(w http.ResponseWriter, r *http.Request) {
 	if errGetCardDeckInfo != nil {
 		fmt.Println(errGetCardDeckInfo)
 	}
-
-	yytInfos, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_infos.json"))
-	if yytErr != nil {
-		fmt.Println(yytErr)
-	}
-	json.Unmarshal(yytInfos, &yytMap)
 
 	for _, card := range cardsInfo {
 		var total = card.Amount * yytMap[card.ID].Price
@@ -290,11 +278,6 @@ func cardimages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	createCardsCodeFile(deck.Dir, cardsDeck)
-	yytInfos, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_infos.json"))
-	if yytErr != nil {
-		fmt.Println(yytErr)
-	}
-	json.Unmarshal(yytInfos, &yytMap)
 	for _, card := range cardsDeck {
 		card, has := yytMap[card.ID]
 		if has {
@@ -317,6 +300,12 @@ func main() {
 	os.MkdirAll(filepath.Join("static", "yuyutei"), 0744)
 	os.MkdirAll(filepath.Join("static", "wsdeck"), 0744)
 	// static := http.FileServer(http.Dir("./"))
+	yytInfosData, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_infos.json"))
+	if yytErr != nil {
+		fmt.Println(yytErr)
+	}
+	json.Unmarshal(yytInfosData, &yytMap)
+
 	http.HandleFunc("/", proxy.handle)
 
 	http.HandleFunc("/translationimages", getTranslationHotC)
@@ -427,20 +416,14 @@ func main() {
 				if err != nil {
 					fmt.Println(err)
 				}
-				yytInfos, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_infos.json"))
-				if yytErr != nil {
-					fmt.Println(yytErr)
-				}
-				var yytMap = map[string]string{}
-				json.Unmarshal(yytInfos, &yytMap)
 				for _, file := range files {
 					cardID := strings.Replace(file.Name(), "_", "/", 1)
 					cardID = strings.Replace(cardID, "_", "-", 1)
 					cardID = strings.Split(cardID, ".")[0]
 					fmt.Println(cardID)
-					cardURL, has := yytMap[cardID]
+					_, has := yytMap[cardID]
 					if has {
-						urlPath := yuyuteiURL + cardURL
+						urlPath := yuyuteiURL
 						result = append(result, urlPath)
 					}
 				}
