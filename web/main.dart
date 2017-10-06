@@ -206,13 +206,16 @@ printTranslation() {
     List parsedList = JSON.decode(response.response);
     for (var card in parsedList) {
       DivElement printDiv = new DivElement();
-      ParagraphElement translation = new ParagraphElement();
-      translation.appendHtml(card["Translation"].replaceAll("\u21b5", ""), validator: validator);
-      ImageElement image = translation.querySelector("img");
+      printDiv.appendHtml(card["Translation"].replaceAll("\u21b5", ""), validator: validator);
+      printDiv.classes.add("translation-block");
+      for (var td in printDiv.querySelectorAll("td")) {
+          td.attributes["style"] = "";
+      }
+      printDiv.querySelector("table").attributes["width"] = "";
+      ImageElement image = printDiv.querySelector("img");
       image
           ..src = card["URL"]
           ..classes.add("mini-image");
-      printDiv.append(translation);
 
       querySelector('#output').append(printDiv);
     }

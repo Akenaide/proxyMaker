@@ -8,6 +8,22 @@
     width: 100%;
     }
 
+    .translation-block {
+        page-break-inside: avoid;
+        display: inline-block;
+        font-size: 7px;
+    }
+
+    .translation-block td {
+        max-width: 250px;
+        padding: 1px;
+    }
+
+    .mini-image {
+        width: 100px;
+    }
+
+
     canvas {
         border: 2px black solid;
         width: 60mm !important;
