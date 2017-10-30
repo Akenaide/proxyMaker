@@ -263,7 +263,6 @@ func cardimages(w http.ResponseWriter, r *http.Request) {
 	var link = r.PostFormValue("url")
 	var cardsDeck = []card{}
 	var result = []string{}
-	var yytMap = map[string]card{}
 
 	if link != "" {
 	}
