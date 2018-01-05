@@ -13,15 +13,13 @@ removeImage(event) {
 }
 
 class myNodeValidator implements NodeValidator {
-    final NodeValidator _nodeValidator;
-    bool allowsAttribute(Element element, String attributeName, String value) {
-        return true;
-    }
+  bool allowsAttribute(Element element, String attributeName, String value) {
+    return true;
+  }
 
-    bool allowsElement(Element element) => true;
+  bool allowsElement(Element element) => true;
 
-    myNodeValidator():
-        _nodeValidator = new NodeValidator();
+  myNodeValidator() : super();
 }
 
 NodeValidator validator = new myNodeValidator();
@@ -31,35 +29,11 @@ void toggleHideTranslation() {
   canvas.classes.toggle("hide");
 }
 
-allowDrop(Event event) {
-  event.preventDefault();
-}
-
-drag(MouseEvent event) {
-  // event.dataTransfer.setData("text", event.target);
-  print("Not implemented anymore");
-}
-
-drop(MouseEvent event) {
-  event.preventDefault();
-  String data = event.dataTransfer.getData("text");
-  CanvasElement canvas = event.target;
-  CanvasRenderingContext2D context = canvas.getContext("2d");
-  // CanvasElement sourceCanvas = querySelector(data);
-  CanvasElement sourceCanvas = querySelector("#" + data);
-  double finalHeight =
-      sourceCanvas.height * (canvas.width / sourceCanvas.width);
-  context.drawImageScaled(sourceCanvas, 0, (canvas.height - powerHeight),
-      canvas.width, finalHeight);
-}
-
 addImage(event) {
   var image = new ImageElement()..src = event.target.src;
 
   CanvasElement canvas = new CanvasElement()
-    ..classes.add("image")
-    ..onDragOver.listen((e) => allowDrop(e))
-    ..onDrop.listen((e) => drop(e));
+    ..classes.add("image");
 
   image.onLoad.listen((e) {
     CanvasRenderingContext2D context = canvas.getContext("2d");
@@ -96,107 +70,6 @@ getCardImages() {
   });
 }
 
-Future loadImages(List<ImageElement> imgs) {
-  List<Future> imageFutures = [];
-  for (var i = 0; i < imgs.length; i++) {
-    var img = imgs[i];
-    imageFutures.add(img.onLoad.first);
-  }
-
-  return Future.wait(imageFutures);
-}
-
-checkReturnLine(String text) {}
-
-getLines(String text) {
-  int maxlength = 40;
-  List<String> lines = [];
-  String line = "";
-  for (var word in text.split(" ")) {
-    if (line.length <= maxlength) {
-      if (word.contains("\n")) {
-        var subline = word.split("\n");
-        line = line + " " + subline[0];
-        lines.add(line);
-        line = subline[1];
-      } else {
-        line = line + " " + word;
-      }
-    } else {
-      if (word.contains("\n")) {
-        var subline = word.split("\n");
-        line = line + " " + subline[0];
-        lines.add(line);
-        line = subline[1];
-      } else {
-        line = line + " " + word;
-        lines.add(line);
-        line = "";
-      }
-    }
-  }
-  if (line != "") {
-    lines.add(line);
-  }
-  return lines;
-}
-
-bindCanvas(CanvasElement canvas) {
-  List points = [];
-  CanvasElement outCanvas = new CanvasElement();
-  CanvasRenderingContext2D outContext = outCanvas.getContext('2d');
-  canvas.onMouseDown.listen((e) {
-    points.add(e.offset);
-    if (points.length == 2) {
-      outContext.clearRect(0, 0, outCanvas.width, outCanvas.height);
-      Rectangle rect = new Rectangle.fromPoints(points[0], points[1]);
-      outCanvas
-        ..attributes.addAll({"draggable": "true"})
-        ..id = "yay"
-        ..classes.add("no-print")
-        // ..id = new DateTime.now().millisecondsSinceEpoch.toString()
-        ..onDragStart.listen((e) => drag(e))
-        ..width = rect.width
-        ..height = rect.height;
-      outContext.drawImageToRect(
-          canvas, new Rectangle(0, 0, rect.width, rect.height),
-          sourceRect: rect);
-      points.clear();
-      querySelector("#output").append(outCanvas);
-      querySelector(".translation-canvas").classes.toggle("hide");
-    }
-  });
-}
-
-getPdfFile() {
-  InputElement input = querySelector("#input-file");
-  for (var file in input.files) {
-    var reader = new FileReader();
-    reader.onLoad.listen((e) {
-      HttpRequest.postFormData("/translationimages", {
-        "file": reader.result,
-        "filename": file.name
-      }).then((HttpRequest response) {
-        List parsedList = JSON.decode(response.response);
-        List images = [];
-        CanvasElement canvas = new CanvasElement()
-          ..classes.add("translation-canvas")
-          ..classes.add("hide")
-          ..classes.add("no-print");
-        for (var url in parsedList) {
-          ImageElement image = new ImageElement()..src = url;
-          images.add(image);
-        }
-        ;
-        // initCanvas(images, canvas);
-
-        bindCanvas(canvas);
-      });
-    });
-    reader.readAsDataUrl(file);
-  }
-}
-
 printTranslation() {
   spinner.classes.toggle("hide");
   InputElement deckUrl = querySelector("#url");
@@ -206,38 +79,22 @@ printTranslation() {
     List parsedList = JSON.decode(response.response);
     for (var card in parsedList) {
       DivElement printDiv = new DivElement();
-      printDiv.appendHtml(card["Translation"].replaceAll("\u21b5", ""), validator: validator);
+      printDiv.appendHtml(card["Translation"].replaceAll("\u21b5", ""),
+          validator: validator);
       printDiv.classes.add("translation-block");
       for (var td in printDiv.querySelectorAll("td")) {
-          td.attributes["style"] = "";
+        td.attributes["style"] = "";
       }
       printDiv.querySelector("table").attributes["width"] = "";
       ImageElement image = printDiv.querySelector("img");
       image
-          ..src = card["URL"]
-          ..classes.add("mini-image");
+        ..src = card["URL"]
+        ..classes.add("mini-image");
 
       querySelector('#output').append(printDiv);
     }
     spinner.classes.toggle("hide");
   });
-}
-
-printTranslationb() {
-  spinner.classes.toggle("hide");
-  InputElement deckUrl = querySelector("#url");
-
-  DivElement printDiv = new DivElement();
-  Element cardId = new Element.tag("h3");
-  ParagraphElement translation = new ParagraphElement();
-  var text = test.replaceAll("\u21b5", "");
-  translation.appendHtml(text, validator: validator);
-  // cardId.appendText(card["ID"]);
-  // printDiv.append(cardId);
-  printDiv.append(translation);
-
-  querySelector('#output').append(printDiv);
-  spinner.classes.toggle("hide");
 }
 
 estimatePrice() {
@@ -275,7 +132,6 @@ estimatePrice() {
 }
 
 void main() {
-  querySelector("#input-file").onChange.listen((e) => getPdfFile());
   querySelector("#send-url").onClick.listen((e) => getCardImages());
   querySelector("#print-translation").onClick.listen((e) => printTranslation());
   querySelector("#estimate-price").onClick.listen((e) => estimatePrice());
@@ -283,12 +139,4 @@ void main() {
       .onClick
       .listen((e) => toggleHideTranslation());
   spinner = querySelector("#spinner");
-  // querySelector("#yay").onDragStart.listen((e) => drag(e));
-
-  // CanvasElement canvas = querySelector('#myCanvas');
-  // ImageElement img = new ImageElement(src: "./love.png");
-  // querySelector("body").append(img);
-  // img.onLoad.listen((e) => initCanvas(img, canvas));
-
-//   querySelector("#enterUrl").onclick.listen((event) {});
 }
