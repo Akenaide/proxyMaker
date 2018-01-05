@@ -159,10 +159,10 @@ func main() {
 
 	http.HandleFunc("/", proxy.handle)
 
-	http.HandleFunc("/translationimages", getTranslationHotC)
-	http.HandleFunc("/cardimages", cardimages)
-	http.HandleFunc("/update_yyt_infos", yytInfos)
-	http.HandleFunc("/estimateprice", estimatePrice)
+	http.HandleFunc("/views/translationimages", getTranslationHotC)
+	http.HandleFunc("/views/cardimages", cardimages)
+	http.HandleFunc("/views/estimateprice", estimatePrice)
+	http.HandleFunc("/views/update_yyt_infos", yytInfos)
 
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println("static", r.URL.Path[1:])

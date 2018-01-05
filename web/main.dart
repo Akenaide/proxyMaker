@@ -55,7 +55,7 @@ getCardImages() {
   InputElement url = querySelector("#url");
   var control = querySelector('#right-panel');
   DivElement output = new DivElement()..id = "images-box";
-  HttpRequest.postFormData("/cardimages", {"url": url.value}).then(
+  HttpRequest.postFormData("/views/cardimages", {"url": url.value}).then(
       (HttpRequest response) {
     List parsedList = JSON.decode(response.response);
     for (var url in parsedList) {
@@ -74,7 +74,7 @@ printTranslation() {
   spinner.classes.toggle("hide");
   InputElement deckUrl = querySelector("#url");
 
-  HttpRequest.postFormData("/translationimages", {"url": deckUrl.value}).then(
+  HttpRequest.postFormData("/views/translationimages", {"url": deckUrl.value}).then(
       (HttpRequest response) {
     List parsedList = JSON.decode(response.response);
     for (var card in parsedList) {
@@ -112,7 +112,7 @@ estimatePrice() {
   headRow.addCell().text = "Amount";
   headRow.addCell().text = "Total";
 
-  HttpRequest.postFormData("/estimateprice", {"url": deckUrl.value}).then(
+  HttpRequest.postFormData("/views/estimateprice", {"url": deckUrl.value}).then(
       (HttpRequest response) {
     List parsedList = JSON.decode(response.response);
     parsedList.sort((a, b) => a["ID"].compareTo(b["ID"]));
