@@ -131,7 +131,8 @@ func getCardDeckInfo(url string) ([]card, error) {
 		card := card{}
 		cardID, exists := s.Attr("data-cardid")
 		if exists {
-			card.ID = cardID
+			var split = strings.Split(cardID, "-")
+			card.ID = fmt.Sprintf("%s%s%s", split[0], "-", strings.Replace(split[1], "E", "", 1))
 		}
 
 		cardAmount, exists := s.Attr("data-amount")
