@@ -164,6 +164,7 @@ func main() {
 	http.HandleFunc("/views/cardimages", cardimages)
 	http.HandleFunc("/views/estimateprice", estimatePrice)
 	http.HandleFunc("/views/update_yyt_infos", yytInfos)
+	http.HandleFunc("/views/searchcards", searchcards)
 
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println("static", r.URL.Path[1:])

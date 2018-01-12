@@ -153,3 +153,12 @@ func estimatePrice(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(b)
 }
+
+func searchcards(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("searchcards")
+	ID, ok := r.URL.Query()["id"]
+
+	if !ok {
+		return
+	}
+}
