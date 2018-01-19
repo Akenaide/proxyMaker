@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -159,6 +160,18 @@ func searchcards(w http.ResponseWriter, r *http.Request) {
 	ID, ok := r.URL.Query()["id"]
 
 	if !ok {
+		io.WriteString(w, "ID is empty")
 		return
+	}
+
+	infos, exists := yytMap[ID[0]]
+	if !exists {
+		io.WriteString(w, fmt.Sprintf("%v does not exists", ID))
+	} else {
+		b, err := json.Marshal(infos)
+		if err != nil {
+			fmt.Println(err)
+		}
+		w.Write(b)
 	}
 }
