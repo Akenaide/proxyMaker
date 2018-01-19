@@ -32,8 +32,7 @@ void toggleHideTranslation() {
 addImage(event) {
   var image = new ImageElement()..src = event.target.src;
 
-  CanvasElement canvas = new CanvasElement()
-    ..classes.add("image");
+  CanvasElement canvas = new CanvasElement()..classes.add("image");
 
   image.onLoad.listen((e) {
     CanvasRenderingContext2D context = canvas.getContext("2d");
@@ -50,11 +49,26 @@ addImage(event) {
       .listen((e) => removeImage(e));
 }
 
+addSingleImage() {
+  spinner.classes.toggle("hide");
+  InputElement url = querySelector("#url");
+  var output = querySelector('#images-box');
+  HttpRequest
+      .getString("/views/searchcards?id=" + url.value)
+      .then((String response) {
+    var parsed = JSON.decode(response);
+    var image = new ImageElement();
+    image.src = parsed["URL"];
+    output.append(image);
+    querySelectorAll("#images-box img").onClick.listen((e) => addImage(e));
+  });
+  spinner.classes.toggle("hide");
+}
+
 getCardImages() {
   spinner.classes.toggle("hide");
   InputElement url = querySelector("#url");
-  var control = querySelector('#right-panel');
-  DivElement output = new DivElement()..id = "images-box";
+  var output = querySelector('#images-box');
   HttpRequest.postFormData("/views/cardimages", {"url": url.value}).then(
       (HttpRequest response) {
     List parsedList = JSON.decode(response.response);
@@ -64,7 +78,6 @@ getCardImages() {
       output.append(image);
     }
     ;
-    control.append(output);
     querySelectorAll("#images-box img").onClick.listen((e) => addImage(e));
     spinner.classes.toggle("hide");
   });
@@ -74,8 +87,9 @@ printTranslation() {
   spinner.classes.toggle("hide");
   InputElement deckUrl = querySelector("#url");
 
-  HttpRequest.postFormData("/views/translationimages", {"url": deckUrl.value}).then(
-      (HttpRequest response) {
+  HttpRequest
+      .postFormData("/views/translationimages", {"url": deckUrl.value}).then(
+          (HttpRequest response) {
     List parsedList = JSON.decode(response.response);
     for (var card in parsedList) {
       DivElement printDiv = new DivElement();
@@ -135,6 +149,7 @@ void main() {
   querySelector("#send-url").onClick.listen((e) => getCardImages());
   querySelector("#print-translation").onClick.listen((e) => printTranslation());
   querySelector("#estimate-price").onClick.listen((e) => estimatePrice());
+  querySelector("#add-single-card").onClick.listen((e) => addSingleImage());
   querySelector("#toggle-hide-translation")
       .onClick
       .listen((e) => toggleHideTranslation());
