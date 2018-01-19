@@ -69,8 +69,7 @@ func cardimages(w http.ResponseWriter, r *http.Request) {
 	for _, card := range cardsDeck {
 		card, has := yytMap[card.ID]
 		if has {
-			urlPath := yuyuteiURL + card.URL
-			result = append(result, urlPath)
+			result = append(result, card.URL)
 		}
 	}
 	b, err := json.Marshal(result)
