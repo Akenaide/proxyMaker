@@ -36,7 +36,7 @@ func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 		}
 		card.Translation = html.UnescapeString(textHTML)
-		card.URL = yuyuteiURL + yytMap[card.ID].URL
+		card.URL = yytMap[card.ID].URL
 
 		translations = append(translations, card)
 	}
@@ -141,7 +141,7 @@ func estimatePrice(w http.ResponseWriter, r *http.Request) {
 	for _, card := range cardsInfo {
 		var total = card.Amount * yytMap[card.ID].Price
 		deckPrice = deckPrice + total
-		card.URL = yuyuteiURL + yytMap[card.ID].URL
+		card.URL = yytMap[card.ID].URL
 		card.Price = yytMap[card.ID].Price
 		result = append(result, card)
 	}
