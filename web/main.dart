@@ -70,7 +70,7 @@ addSingleImage() {
 }
 
 getCardImages() {
-  ga.sendScreenView("cardimages");
+  ga.sendEvent("cardimages", "submit");
   spinner.classes.toggle("hide");
   InputElement url = querySelector("#url");
   var output = querySelector('#images-box');
@@ -89,7 +89,7 @@ getCardImages() {
 }
 
 printTranslation() {
-  ga.sendScreenView("translationimages");
+  ga.sendEvent("translationimages", "submit");
   spinner.classes.toggle("hide");
   InputElement deckUrl = querySelector("#url");
 
@@ -118,7 +118,7 @@ printTranslation() {
 }
 
 estimatePrice() {
-  ga.sendScreenView("estimateprice");
+  ga.sendEvent("estimateprice", "submit");
   spinner.classes.toggle("hide");
   InputElement deckUrl = querySelector("#url");
   TableElement table = new TableElement();
