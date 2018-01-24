@@ -5,8 +5,12 @@ import 'dart:html';
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:usage/usage_html.dart';
+
+final String UA = 'UA-75241462-1';
 final int powerHeight = 90;
 DivElement spinner;
+Analytics ga = new AnalyticsHtml(UA, 'proxymaker', '1.0');
 
 removeImage(event) {
   event.target.remove();
@@ -66,6 +70,7 @@ addSingleImage() {
 }
 
 getCardImages() {
+  ga.sendScreenView("cardimages");
   spinner.classes.toggle("hide");
   InputElement url = querySelector("#url");
   var output = querySelector('#images-box');
@@ -84,6 +89,7 @@ getCardImages() {
 }
 
 printTranslation() {
+  ga.sendScreenView("translationimages");
   spinner.classes.toggle("hide");
   InputElement deckUrl = querySelector("#url");
 
@@ -112,6 +118,7 @@ printTranslation() {
 }
 
 estimatePrice() {
+  ga.sendScreenView("estimateprice");
   spinner.classes.toggle("hide");
   InputElement deckUrl = querySelector("#url");
   TableElement table = new TableElement();
