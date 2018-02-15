@@ -139,9 +139,14 @@ estimatePrice() {
     parsedList.sort((a, b) => a["ID"].compareTo(b["ID"]));
     for (var card in parsedList) {
       ImageElement image = new ImageElement(src: card["URL"]);
+      AnchorElement link = new AnchorElement()..
+          href=card["CardURL"];
+      SpanElement span = new SpanElement();
+      span.appendText(card["ID"]);
+      link.children.add(span);
       image.classes.add("estimate__image");
       TableRowElement row = tbody.addRow();
-      row.addCell().text = card["ID"];
+      row.addCell().children = [link];
       row.addCell().children = [image];
       row.addCell().text = card["Price"].toString();
       row.addCell().text = card["Amount"].toString();

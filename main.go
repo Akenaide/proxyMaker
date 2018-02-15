@@ -47,6 +47,7 @@ type card struct {
 	Amount      int
 	URL         string
 	Price       int
+	CardURL     string
 }
 
 // New proxy

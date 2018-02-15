@@ -143,6 +143,7 @@ func estimatePrice(w http.ResponseWriter, r *http.Request) {
 		deckPrice = deckPrice + total
 		card.URL = yytMap[card.ID].URL
 		card.Price = yytMap[card.ID].Price
+		card.CardURL = yytMap[card.ID].CardURL
 		result = append(result, card)
 	}
 
