@@ -63,7 +63,7 @@ func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 
 func cardimages(w http.ResponseWriter, r *http.Request) {
 	var link = r.PostFormValue("url")
-	var cardsDeck = []card{}
+	var cardsDeck = []Card{}
 	var result = []string{}
 
 	if link != "" {
@@ -99,7 +99,7 @@ func yytInfos(w http.ResponseWriter, r *http.Request) {
 	out, err := os.Create(filepath.Join("static", "yyt_infos.json"))
 	var buffer bytes.Buffer
 	defer out.Close()
-	cardMap := map[string]card{}
+	cardMap := map[string]Card{}
 	filter := "ul[data-class=sell] .item_single_card .nav_list_second .nav_list_third a"
 	doc, err := goquery.NewDocument(yuyuteiBase)
 
@@ -124,7 +124,7 @@ func yytInfos(w http.ResponseWriter, r *http.Request) {
 				}
 				cardURL, _ := cardS.Find(".image img").Attr("src")
 				cardURL = strings.Replace(cardURL, "90_126", "front", 1)
-				yytInfo := card{URL: cardURL, Price: cardPrice}
+				yytInfo := Card{URL: cardURL, Price: cardPrice}
 				cardMap[strings.TrimSpace(cardS.Find(".id").Text())] = yytInfo
 			})
 			if errCard != nil {
@@ -143,7 +143,7 @@ func yytInfos(w http.ResponseWriter, r *http.Request) {
 
 func estimatePrice(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("estimatePrice")
-	var result = []card{}
+	var result = []Card{}
 	var deckPrice int
 
 	cardsInfo, errGetCardDeckInfo := getCardDeckInfo(r.PostFormValue("url"))
@@ -160,7 +160,7 @@ func estimatePrice(w http.ResponseWriter, r *http.Request) {
 		result = append(result, card)
 	}
 
-	result = append(result, card{ID: "TOTAL", Price: deckPrice})
+	result = append(result, Card{ID: "TOTAL", Price: deckPrice})
 	b, err := json.Marshal(result)
 	if err != nil {
 		fmt.Println(err)

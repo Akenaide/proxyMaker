@@ -21,7 +21,7 @@ const wsDeckURL = "https://wsdecks.com"
 const hoTcURL = "http://www.heartofthecards.com/code/cardlist.html?card=WS_"
 const yuyuteiBase = "http://yuyu-tei.jp/game_ws"
 
-var yytMap = map[string]card{}
+var yytMap = map[string]Card{}
 
 // Prox struct
 type Prox struct {
@@ -41,7 +41,7 @@ type deck struct {
 	Site site
 }
 
-type card struct {
+type Card struct {
 	ID          string
 	Translation string
 	Amount      int
@@ -77,7 +77,7 @@ func convertToJpg(filePath string) {
 	err = cmd.Wait()
 }
 
-func createCardsCodeFile(dirPath string, cardsID []card) (string, error) {
+func createCardsCodeFile(dirPath string, cardsID []Card) (string, error) {
 	//TODO Do nothing if file exists
 	os.MkdirAll(dirPath, 0744)
 	dirPath += "/"
@@ -119,10 +119,10 @@ func getDeckConfig(link string) (deck, error) {
 	return deck, nil
 }
 
-func getCardDeckInfo(url string) ([]card, error) {
+func getCardDeckInfo(url string) ([]Card, error) {
 	fmt.Println("getCardDeckInfo")
 
-	var cardsDeck = []card{}
+	var cardsDeck = []Card{}
 
 	doc, err := goquery.NewDocument(url)
 	if err != nil {
@@ -130,7 +130,7 @@ func getCardDeckInfo(url string) ([]card, error) {
 		return cardsDeck, err
 	}
 	doc.Find("div .wscard").Each(func(i int, s *goquery.Selection) {
-		card := card{}
+		card := Card{}
 		cardID, exists := s.Attr("data-cardid")
 		if exists {
 			var split = strings.Split(cardID, "-")
