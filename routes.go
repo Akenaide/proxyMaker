@@ -30,28 +30,37 @@ var cockatricCXMap = map[string]string{
 
 func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("getTranslationHotC")
+	var sem = make(chan bool, 2)
 
-	translations := []card{}
+	translations := []Card{}
 	cardsInfo, errGetCardDeckInfo := getCardDeckInfo(r.PostFormValue("url"))
 	if errGetCardDeckInfo != nil {
 		fmt.Println(errGetCardDeckInfo)
 	}
 
 	for _, card := range cardsInfo {
-		url := hoTcURL + card.ID + "&short=1"
-		fmt.Println(url)
-		doc, err := goquery.NewDocument(url)
-		if err != nil {
-			fmt.Println(err)
-		}
-		textHTML, err := doc.Find("body").Html()
-		if err != nil {
-			fmt.Println(err)
-		}
-		card.Translation = html.UnescapeString(textHTML)
-		card.URL = yytMap[card.ID].URL
+		sem <- true
+		go func(card Card) {
+			defer func() { <-sem }()
+			url := hoTcURL + card.ID + "&short=1"
+			fmt.Println(url)
+			doc, err := goquery.NewDocument(url)
+			if err != nil {
+				fmt.Println(err)
+			}
+			textHTML, err := doc.Find("body").Html()
+			if err != nil {
+				fmt.Println(err)
+			}
+			card.Translation = html.UnescapeString(textHTML)
+			card.URL = yytMap[card.ID].URL
 
-		translations = append(translations, card)
+			translations = append(translations, card)
+		}(card)
+	}
+
+	for i := 0; i < cap(sem); i++ {
+		sem <- true
 	}
 
 	b, err := json.Marshal(translations)
