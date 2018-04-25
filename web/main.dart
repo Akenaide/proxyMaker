@@ -53,6 +53,24 @@ addImage(event) {
       .listen((e) => removeImage(e));
 }
 
+exportCockatrice() {
+  spinner.classes.toggle("hide");
+  InputElement url = querySelector("#url");
+  var output = querySelector('#images-box');
+  AnchorElement link = new AnchorElement();
+  HttpRequest.postFormData("/views/exportcockatrice", {"url": url.value}).then(
+      (HttpRequest response) {
+    SpanElement span = new SpanElement();
+    span.appendText("deck");
+    link.href =
+        "data:text/plain;charset=utf-8," + Uri.encodeFull(response.response);
+    link.download = "export.cod";
+    link.append(span);
+    output.append(link);
+    spinner.classes.toggle("hide");
+  });
+}
+
 addSingleImage() {
   spinner.classes.toggle("hide");
   InputElement url = querySelector("#url");
@@ -139,8 +157,7 @@ estimatePrice() {
     parsedList.sort((a, b) => a["ID"].compareTo(b["ID"]));
     for (var card in parsedList) {
       ImageElement image = new ImageElement(src: card["URL"]);
-      AnchorElement link = new AnchorElement()..
-          href=card["CardURL"];
+      AnchorElement link = new AnchorElement()..href = card["CardURL"];
       SpanElement span = new SpanElement();
       span.appendText(card["ID"]);
       link.children.add(span);
@@ -162,6 +179,7 @@ void main() {
   querySelector("#print-translation").onClick.listen((e) => printTranslation());
   querySelector("#estimate-price").onClick.listen((e) => estimatePrice());
   querySelector("#add-single-card").onClick.listen((e) => addSingleImage());
+  querySelector("#export-cockatrice").onClick.listen((e) => exportCockatrice());
   querySelector("#toggle-hide-translation")
       .onClick
       .listen((e) => toggleHideTranslation());

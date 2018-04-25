@@ -6,14 +6,27 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/PuerkitoBio/goquery"
 )
+
+type dataTemplate struct {
+	Name  string
+	Cards []card
+}
+
+var cockatricCXMap = map[string]string{
+	"CR": "R",
+	"CU": "U",
+	"CC": "C",
+}
 
 func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("getTranslationHotC")
@@ -155,6 +168,39 @@ func estimatePrice(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func exportcockatrice(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("exportcockatrice")
+	var data = dataTemplate{}
+	var b bytes.Buffer
+
+	cardsInfo, errGetCardDeckInfo := getCardDeckInfo(r.PostFormValue("url"))
+	if errGetCardDeckInfo != nil {
+		fmt.Println(errGetCardDeckInfo)
+	}
+
+	data.Name = "ex"
+	for _, card := range cardsInfo {
+		var complete = yytMap[card.ID]
+		complete.Amount = card.Amount
+		complete.ID = strings.Replace(complete.ID, "/", "-", 1)
+		if elem, ok := cockatricCXMap[complete.Rarity]; ok {
+			complete.Rarity = elem
+		}
+		data.Cards = append(data.Cards, complete)
+	}
+
+	t, err := template.ParseFiles("./cockatrice_template.xml")
+	if err != nil {
+		log.Println(err)
+	}
+
+	t.Execute(&b, data)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	w.Write(b.Bytes())
+}
 func searchcards(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("searchcards")
 	ID, ok := r.URL.Query()["id"]
