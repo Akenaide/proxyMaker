@@ -16,10 +16,10 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-const yuyuteiURL = "http://yuyu-tei.jp/"
+const yuyuteiURL = "https://yuyu-tei.jp/"
 const wsDeckURL = "https://wsdecks.com"
-const hoTcURL = "http://www.heartofthecards.com/code/cardlist.html?card=WS_"
-const yuyuteiBase = "http://yuyu-tei.jp/game_ws"
+const hoTcURL = "https://www.heartofthecards.com/code/cardlist.html?card=WS_"
+const yuyuteiBase = "https://yuyu-tei.jp/game_ws"
 
 var yytMap = map[string]Card{}
 
