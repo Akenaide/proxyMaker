@@ -216,12 +216,14 @@ func searchcards(w http.ResponseWriter, r *http.Request) {
 
 	if !ok {
 		io.WriteString(w, "ID is empty")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	infos, exists := yytMap[ID[0]]
 	if !exists {
 		io.WriteString(w, fmt.Sprintf("%v does not exists", ID))
+		w.WriteHeader(http.StatusBadRequest)
 	} else {
 		b, err := json.Marshal(infos)
 		if err != nil {
