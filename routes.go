@@ -19,7 +19,7 @@ import (
 
 type dataTemplate struct {
 	Name  string
-	Cards []card
+	Cards []Card
 }
 
 var cockatricCXMap = map[string]string{
