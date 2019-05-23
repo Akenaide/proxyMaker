@@ -1,0 +1,6 @@
+0.0.0.0:8090 {
+    proxy /views localhost:8010
+    proxy / localhost:8080
+
+    on startup webdev serve
+}
