@@ -116,6 +116,7 @@ printTranslation() {
     List parsedList = json.decode(response.response);
     for (var card in parsedList) {
       DivElement printDiv = new DivElement();
+      querySelector('#output').append(printDiv);
       printDiv.appendHtml(card["Translation"].replaceAll("\u21b5", ""),
           validator: validator);
       printDiv.classes.add("translation-block");
@@ -128,7 +129,6 @@ printTranslation() {
         ..src = card["URL"]
         ..classes.add("mini-image");
 
-      querySelector('#output').append(printDiv);
     }
     spinner.classes.toggle("hide");
   });

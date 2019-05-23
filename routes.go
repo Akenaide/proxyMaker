@@ -37,9 +37,16 @@ func getPlugin(url string) (plugin, error) {
 func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("getTranslationHotC")
 	var sem = make(chan bool, 2)
+	var link = r.PostFormValue("url")
+	plugin, err := getPlugin(link)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	cardsInfo, errGetCardDeckInfo := plugin.getCardDeckInfo(link)
 
 	translations := []Card{}
-	cardsInfo, errGetCardDeckInfo := getCardDeckInfo(r.PostFormValue("url"))
 	if errGetCardDeckInfo != nil {
 		fmt.Println(errGetCardDeckInfo)
 	}
@@ -78,17 +85,20 @@ func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 
 func cardimages(w http.ResponseWriter, r *http.Request) {
 	var link = r.PostFormValue("url")
-	var cardsDeck = []Card{}
 	var result = []string{}
+	plugin, err := getPlugin(link)
 
-	if link != "" {
+	if err != nil {
+		fmt.Println(err)
 	}
-	cardsDeck, errGetCardDeckInfo := getCardDeckInfo(link)
+
+	cardsInfo, errGetCardDeckInfo := plugin.getCardDeckInfo(link)
+
 	if errGetCardDeckInfo != nil {
 		fmt.Println(errGetCardDeckInfo)
 	}
 
-	for _, card := range cardsDeck {
+	for _, card := range cardsInfo {
 		card, has := yytMap[card.ID]
 		if has {
 			result = append(result, card.URL)
@@ -140,8 +150,15 @@ func exportcockatrice(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("exportcockatrice")
 	var data = dataTemplate{}
 	var b bytes.Buffer
+	var link = r.PostFormValue("url")
+	plugin, err := getPlugin(link)
 
-	cardsInfo, errGetCardDeckInfo := getCardDeckInfo(r.PostFormValue("url"))
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	cardsInfo, errGetCardDeckInfo := plugin.getCardDeckInfo(link)
+
 	if errGetCardDeckInfo != nil {
 		fmt.Println(errGetCardDeckInfo)
 	}
