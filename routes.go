@@ -24,6 +24,16 @@ var cockatricCXMap = map[string]string{
 	"CC": "C",
 }
 
+func getPlugin(url string) (plugin, error) {
+	for _, plugin := range plugins {
+		if plugin.isMine(url) {
+			return plugin, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Url: (%v) not supported", url)
+}
+
 func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("getTranslationHotC")
 	var sem = make(chan bool, 2)
@@ -97,8 +107,14 @@ func estimatePrice(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("estimatePrice")
 	var result = []Card{}
 	var deckPrice int
+	var link = r.PostFormValue("url")
+	plugin, err := getPlugin(link)
 
-	cardsInfo, errGetCardDeckInfo := getCardDeckInfo(r.PostFormValue("url"))
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	cardsInfo, errGetCardDeckInfo := plugin.getCardDeckInfo(link)
 	if errGetCardDeckInfo != nil {
 		fmt.Println(errGetCardDeckInfo)
 	}

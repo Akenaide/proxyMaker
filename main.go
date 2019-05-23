@@ -15,6 +15,7 @@ const hoTcURL = "https://www.heartofthecards.com/code/cardlist.html?card=WS_"
 const yuyuteiBase = "https://yuyu-tei.jp/game_ws"
 
 var yytMap = map[string]Card{}
+var plugins = []plugin{}
 
 // New proxy
 func New(target string) *Prox {
@@ -37,6 +38,8 @@ func main() {
 		fmt.Println(yytErr)
 	}
 	json.Unmarshal(yytInfosData, &yytMap)
+
+	plugins = append(plugins, encoredecks{})
 
 	http.HandleFunc("/", proxy.handle)
 
