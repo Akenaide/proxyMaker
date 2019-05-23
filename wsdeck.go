@@ -1,7 +1,7 @@
-package custom
+package main
 
 import (
-	"log"
+	"fmt"
 	"strconv"
 	"strings"
 
