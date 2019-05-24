@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -36,7 +37,6 @@ func getPlugin(url string) (plugin, error) {
 
 func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("getTranslationHotC")
-	var sem = make(chan bool, 2)
 	var link = r.PostFormValue("url")
 	plugin, err := getPlugin(link)
 
@@ -52,28 +52,21 @@ func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, card := range cardsInfo {
-		sem <- true
-		go func(card Card) {
-			defer func() { <-sem }()
-			url := hoTcURL + card.ID + "&short=1"
-			fmt.Println(url)
-			doc, err := goquery.NewDocument(url)
-			if err != nil {
-				fmt.Println(err)
-			}
-			textHTML, err := doc.Find("body").Html()
-			if err != nil {
-				fmt.Println(err)
-			}
-			card.Translation = html.UnescapeString(textHTML)
-			card.URL = yytMap[card.ID].URL
+		url := hoTcURL + card.ID + "&short=1"
+		fmt.Println(url)
+		doc, err := goquery.NewDocument(url)
+		if err != nil {
+			fmt.Println(err)
+		}
+		textHTML, err := doc.Find("body").Html()
+		if err != nil {
+			fmt.Println(err)
+		}
+		card.Translation = html.UnescapeString(textHTML)
+		card.URL = yytMap[card.ID].URL
 
-			translations = append(translations, card)
-		}(card)
-	}
-
-	for i := 0; i < cap(sem); i++ {
-		sem <- true
+		translations = append(translations, card)
+		time.Sleep(1 * time.Second)
 	}
 
 	b, err := json.Marshal(translations)
