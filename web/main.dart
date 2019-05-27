@@ -57,8 +57,8 @@ exportCockatrice() {
   InputElement url = querySelector("#url");
   var output = querySelector('#images-box');
   AnchorElement link = new AnchorElement();
-  HttpRequest.postFormData("/views/exportcockatrice", {"url": url.value}).then(
-      (HttpRequest response) {
+  HttpRequest.postFormData("/views/exportcockatrice", {"url": url.value})
+      .then((HttpRequest response) {
     SpanElement span = new SpanElement();
     span.appendText("deck");
     link.href =
@@ -74,8 +74,7 @@ addSingleImage() {
   spinner.classes.toggle("hide");
   InputElement url = querySelector("#url");
   var output = querySelector('#images-box');
-  HttpRequest
-      .getString("/views/searchcards?id=" + url.value)
+  HttpRequest.getString("/views/searchcards?id=" + url.value)
       .then((String response) {
     var parsed = json.decode(response);
     var image = new ImageElement();
@@ -91,8 +90,8 @@ getCardImages() {
   spinner.classes.toggle("hide");
   InputElement url = querySelector("#url");
   var output = querySelector('#images-box');
-  HttpRequest.postFormData("/views/cardimages", {"url": url.value}).then(
-      (HttpRequest response) {
+  HttpRequest.postFormData("/views/cardimages", {"url": url.value})
+      .then((HttpRequest response) {
     List parsedList = json.decode(response.response);
     for (var url in parsedList) {
       var image = new ImageElement();
@@ -110,9 +109,8 @@ printTranslation() {
   spinner.classes.toggle("hide");
   InputElement deckUrl = querySelector("#url");
 
-  HttpRequest
-      .postFormData("/views/translationimages", {"url": deckUrl.value}).then(
-          (HttpRequest response) {
+  HttpRequest.postFormData("/views/translationimages", {"url": deckUrl.value})
+      .then((HttpRequest response) {
     List parsedList = json.decode(response.response);
     for (var card in parsedList) {
       DivElement printDiv = new DivElement();
@@ -128,7 +126,6 @@ printTranslation() {
       image
         ..src = card["URL"]
         ..classes.add("mini-image");
-
     }
     spinner.classes.toggle("hide");
   });
@@ -150,19 +147,23 @@ estimatePrice() {
   headRow.addCell().text = "Amount";
   headRow.addCell().text = "Total";
 
-  HttpRequest.postFormData("/views/estimateprice", {"url": deckUrl.value}).then(
-      (HttpRequest response) {
+  HttpRequest.postFormData("/views/estimateprice", {"url": deckUrl.value})
+      .then((HttpRequest response) {
     List parsedList = json.decode(response.response);
     parsedList.sort((a, b) => a["ID"].compareTo(b["ID"]));
     for (var card in parsedList) {
       ImageElement image = new ImageElement(src: card["URL"]);
       AnchorElement link = new AnchorElement()..href = card["CardURL"];
+      AnchorElement history = new AnchorElement()
+        ..href = "https://kusa.naide.moe/detail/${card['ID']}";
       SpanElement span = new SpanElement();
       span.appendText(card["ID"]);
       link.children.add(span);
+
+      history.children.add(new SpanElement()..appendText("Price history"));
       image.classes.add("estimate__image");
       TableRowElement row = tbody.addRow();
-      row.addCell().children = [link];
+      row.addCell().children = [link, new BRElement(), history];
       row.addCell().children = [image];
       row.addCell().text = card["Price"].toString();
       row.addCell().text = card["Amount"].toString();
