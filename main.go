@@ -40,6 +40,7 @@ func main() {
 	json.Unmarshal(yytInfosData, &yytMap)
 
 	plugins = append(plugins, encoredecks{})
+	plugins = append(plugins, wstcg{})
 
 	http.HandleFunc("/", proxy.handle)
 

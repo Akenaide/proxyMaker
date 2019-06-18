@@ -108,8 +108,7 @@ func cardimages(w http.ResponseWriter, r *http.Request) {
 
 func estimatePrice(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("estimatePrice")
-	var result = []Card{}
-	var deckPrice int
+	var decks = [][]Card{}
 	var link = r.PostFormValue("url")
 	plugin, err := getPlugin(link)
 
@@ -117,22 +116,27 @@ func estimatePrice(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
-	cardsInfo, errGetCardDeckInfo := plugin.getCardDeckInfo(link)
+	decksInfo, errGetCardDeckInfo := plugin.getCardDecksInfoList(link)
 	if errGetCardDeckInfo != nil {
 		fmt.Println(errGetCardDeckInfo)
 	}
 
-	for _, card := range cardsInfo {
-		var total = card.Amount * yytMap[card.ID].Price
-		deckPrice = deckPrice + total
-		card.URL = yytMap[card.ID].URL
-		card.Price = yytMap[card.ID].Price
-		card.CardURL = yytMap[card.ID].CardURL
-		result = append(result, card)
+	for _, deck := range decksInfo {
+		var result = []Card{}
+		var deckPrice int
+		for _, card := range deck {
+			var total = card.Amount * yytMap[card.ID].Price
+			deckPrice = deckPrice + total
+			card.URL = yytMap[card.ID].URL
+			card.Price = yytMap[card.ID].Price
+			card.CardURL = yytMap[card.ID].CardURL
+			result = append(result, card)
+		}
+		result = append(result, Card{ID: "TOTAL", Price: deckPrice})
+		decks = append(decks, result)
 	}
 
-	result = append(result, Card{ID: "TOTAL", Price: deckPrice})
-	b, err := json.Marshal(result)
+	b, err := json.Marshal(decks)
 	if err != nil {
 		fmt.Println(err)
 	}

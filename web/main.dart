@@ -135,41 +135,48 @@ estimatePrice() {
   ga.sendEvent("estimateprice", "submit");
   spinner.classes.toggle("hide");
   InputElement deckUrl = querySelector("#url");
-  TableElement table = new TableElement();
-  table.classes.add("table");
-  table.classes.add("table-bordered");
-  TableSectionElement tbody = table.createTBody();
-  TableSectionElement thead = table.createTHead();
-  TableRowElement headRow = thead.addRow();
-  headRow.addCell().text = "ID";
-  headRow.addCell().text = "Image";
-  headRow.addCell().text = "Price";
-  headRow.addCell().text = "Amount";
-  headRow.addCell().text = "Total";
+  Element section = new Element.section();
 
   HttpRequest.postFormData("/views/estimateprice", {"url": deckUrl.value})
       .then((HttpRequest response) {
-    List parsedList = json.decode(response.response);
-    parsedList.sort((a, b) => a["ID"].compareTo(b["ID"]));
-    for (var card in parsedList) {
-      ImageElement image = new ImageElement(src: card["URL"]);
-      AnchorElement link = new AnchorElement()..href = card["CardURL"];
-      AnchorElement history = new AnchorElement()
-        ..href = "https://kusa.naide.moe/detail/${card['ID']}";
-      SpanElement span = new SpanElement();
-      span.appendText(card["ID"]);
-      link.children.add(span);
+    List decks = json.decode(response.response);
+    for (var deck in decks) {
+      TableElement table = new TableElement();
+      table.classes.add("table");
+      table.classes.add("table-bordered");
+      TableSectionElement tbody = table.createTBody();
+      TableSectionElement thead = table.createTHead();
+      TableRowElement headRow = thead.addRow();
+      headRow.addCell().text = "ID";
+      headRow.addCell().text = "Image";
+      headRow.addCell().text = "Price";
+      headRow.addCell().text = "Amount";
+      headRow.addCell().text = "Total";
+      deck.sort((a, b) => a["ID"].compareTo(b["ID"]) as int);
+      for (var card in deck) {
+        ImageElement image = new ImageElement(src: card["URL"]);
+        AnchorElement link = new AnchorElement()..href = card["CardURL"];
+        AnchorElement history = new AnchorElement()
+          ..href = "https://kusa.naide.moe/detail/${card['ID']}";
+        AnchorElement trans = new AnchorElement()
+          ..href = "https://heartofthecards.com/code/cardlist.html?card=WS_/${card['ID']}";
+        SpanElement span = new SpanElement();
+        span.appendText(card["ID"]);
+        link.children.add(span);
 
-      history.children.add(new SpanElement()..appendText("Price history"));
-      image.classes.add("estimate__image");
-      TableRowElement row = tbody.addRow();
-      row.addCell().children = [link, new BRElement(), history];
-      row.addCell().children = [image];
-      row.addCell().text = card["Price"].toString();
-      row.addCell().text = card["Amount"].toString();
-      row.addCell().text = (card["Price"] * card["Amount"]).toString();
+        history.children.add(new SpanElement()..appendText("Price history"));
+        trans.children.add(new SpanElement()..appendText("Translation"));
+        image.classes.add("estimate__image");
+        TableRowElement row = tbody.addRow();
+        row.addCell().children = [link, new BRElement(), history, new BRElement(), trans];
+        row.addCell().children = [image];
+        row.addCell().text = card["Price"].toString();
+        row.addCell().text = card["Amount"].toString();
+        row.addCell().text = (card["Price"] * card["Amount"]).toString();
+      }
+      section.children.add(table);
     }
-    querySelector('#output').append(table);
+    querySelector('#output').append(section);
     spinner.classes.toggle("hide");
   });
 }

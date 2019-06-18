@@ -31,6 +31,16 @@ func encoreCompact(cards []encoreCardInfo) map[string]int {
 	return res
 }
 
+func (e encoredecks) getCardDecksInfoList(url string) ([][]Card, error) {
+	var decks = [][]Card{}
+	info, err := e.getCardDeckInfo(url)
+	if err != nil {
+		fmt.Println(err)
+	}
+	decks = append(decks, info)
+	return decks, nil
+}
+
 func (e encoredecks) getCardDeckInfo(url string) ([]Card, error) {
 	var cardsDeck = []Card{}
 	var encoreAPI = strings.Replace(url, "/deck", "/api/deck", 1)
