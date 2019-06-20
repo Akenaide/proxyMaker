@@ -26,7 +26,7 @@ func (e wstcg) getCardDecksInfoList(url string) ([][]Card, error) {
 
 	doc.Find("table.deckrecipe_table").Each(func(i int, s *goquery.Selection) {
 		cardsDeck := []Card{}
-		s.Find("tr.kind_2").Each(func(i int, s *goquery.Selection) {
+		s.Find("tr").Each(func(i int, s *goquery.Selection) {
 			card := Card{}
 			cardID := s.Find(".cardno").Text()
 			if cardID != "" {
