@@ -3,4 +3,7 @@
 proxyMaker
 
 ## Requirements
-Need [imagemagick](http://www.imagemagick.org/) to convert pdf to jpg
+
+### Webdev cli for dart
+
+> pub global activate webdev
