@@ -8,6 +8,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"path/filepath"
+
+	"log"
 )
 
 const yuyuteiURL = "https://yuyu-tei.jp/"
@@ -41,6 +43,7 @@ func main() {
 
 	plugins = append(plugins, encoredecks{})
 	plugins = append(plugins, wstcg{})
+	plugins = append(plugins, decklog{})
 
 	http.HandleFunc("/", proxy.handle)
 
@@ -54,5 +57,7 @@ func main() {
 		http.ServeFile(w, r, r.URL.Path[1:])
 	})
 
+	log.Print("Ready!")
 	http.ListenAndServe(":8010", nil)
+
 }
