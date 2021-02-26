@@ -15,6 +15,9 @@ func (e wstcg) getCardDeckInfo(url string) ([]Card, error) {
 	return cardsDeck, nil
 }
 
+func (e wstcg) name() string {
+	return "wstcg"
+}
 func (e wstcg) getCardDecksInfoList(url string) ([][]Card, error) {
 	var decks = [][]Card{}
 

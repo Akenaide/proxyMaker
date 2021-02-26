@@ -18,6 +18,10 @@ type decklogResponse struct {
 	Cards []decklogCardInfo `json:"list"`
 }
 
+func (e decklog) name() string {
+	return "decklog"
+}
+
 func (e decklog) getCardDecksInfoList(url string) ([][]Card, error) {
 	var decks = [][]Card{}
 	info, err := e.getCardDeckInfo(url)

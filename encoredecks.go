@@ -31,6 +31,10 @@ func encoreCompact(cards []encoreCardInfo) map[string]int {
 	return res
 }
 
+func (e encoredecks) name() string {
+	return "encoredeck"
+}
+
 func (e encoredecks) getCardDecksInfoList(url string) ([][]Card, error) {
 	var decks = [][]Card{}
 	info, err := e.getCardDeckInfo(url)

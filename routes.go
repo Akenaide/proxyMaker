@@ -7,10 +7,13 @@ import (
 	"html"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
 
+	"github.com/Akenaide/biri"
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -19,11 +22,18 @@ type dataTemplate struct {
 	Cards []Card
 }
 
+type respMap struct {
+	Resp *http.Response
+	Card Card
+}
+
 var cockatricCXMap = map[string]string{
 	"CR": "R",
 	"CU": "U",
 	"CC": "C",
 }
+
+const cacheTime = (time.Hour * 24) * 3
 
 func getPlugin(url string) (plugin, error) {
 	for _, plugin := range plugins {
@@ -33,6 +43,57 @@ func getPlugin(url string) (plugin, error) {
 	}
 
 	return nil, fmt.Errorf("Url: (%v) not supported", url)
+}
+
+func fetchTranslation(cardsInfo []Card) []Card {
+	translations := []Card{}
+	respChan := make(chan respMap)
+	allCards := len(cardsInfo)
+	iter := 1
+
+	for _, card := range cardsInfo {
+		url := hoTcURL + card.ID + "&short=1"
+		fmt.Println(url)
+
+		go func(url string, card Card) {
+			for {
+				var proxy = biri.GetClient()
+
+				_resp, err := proxy.Client.Get(url)
+				if err != nil {
+					fmt.Println("proxy erro", err)
+					proxy.Ban()
+					continue
+				}
+				proxy.Readd()
+				respChan <- respMap{_resp, card}
+				break
+			}
+		}(url, card)
+	}
+
+	for respM := range respChan {
+
+		doc, err := goquery.NewDocumentFromResponse(respM.Resp)
+		if err != nil {
+			fmt.Println(err)
+		}
+		textHTML, err := doc.Find("body").Html()
+		if err != nil {
+			fmt.Println(err)
+		}
+		respM.Card.Translation = html.UnescapeString(textHTML)
+		respM.Card.URL = yytMap[respM.Card.ID].URL
+
+		translations = append(translations, respM.Card)
+		if iter < allCards {
+			iter = iter + 1
+		} else {
+			break
+		}
+	}
+
+	return translations
 }
 
 func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
@@ -45,29 +106,11 @@ func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cardsInfo, errGetCardDeckInfo := plugin.getCardDeckInfo(link)
-
-	translations := []Card{}
 	if errGetCardDeckInfo != nil {
 		fmt.Println(errGetCardDeckInfo)
 	}
 
-	for _, card := range cardsInfo {
-		url := hoTcURL + card.ID + "&short=1"
-		fmt.Println(url)
-		doc, err := goquery.NewDocument(url)
-		if err != nil {
-			fmt.Println(err)
-		}
-		textHTML, err := doc.Find("body").Html()
-		if err != nil {
-			fmt.Println(err)
-		}
-		card.Translation = html.UnescapeString(textHTML)
-		card.URL = yytMap[card.ID].URL
-
-		translations = append(translations, card)
-		time.Sleep(1 * time.Second)
-	}
+	var translations = fetchTranslation(cardsInfo)
 
 	b, err := json.Marshal(translations)
 	if err != nil {
@@ -202,4 +245,59 @@ func searchcards(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write(b)
 	}
+}
+
+func cache(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("cache")
+	var links = r.PostFormValue("decks")
+
+	for _, link := range strings.Split(links, ",") {
+
+		plugin, err := getPlugin(links)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		code := strings.Split(link, "/")
+		filename := filepath.Join(plugin.name(), code[len(code)-1]+".json")
+		os.MkdirAll(plugin.name(), 744)
+
+		if infoStat, err := os.Stat(filename); err == nil && r.URL.Query().Get("force") != "true" {
+			fmt.Println("force doko?")
+			isGoodEnough := time.Now().Sub(infoStat.ModTime()).Hours() < cacheTime.Hours()
+			if isGoodEnough {
+				fmt.Printf("USe cache %v for code: %v\n", infoStat.ModTime(), code)
+				continue
+			}
+		}
+
+		cardsInfo, errGetCardDeckInfo := plugin.getCardDeckInfo(link)
+		if errGetCardDeckInfo != nil {
+			fmt.Println(errGetCardDeckInfo)
+		}
+
+		var buffer bytes.Buffer
+
+		translation := fetchTranslation(cardsInfo)
+		marsh, err := json.Marshal(translation)
+
+		if err != nil {
+			fmt.Println(err.Error())
+			w.WriteHeader(500)
+			break
+		}
+
+		out, err := os.Create(filename)
+		if err != nil {
+			log.Println("write error", err.Error())
+			continue
+		}
+		json.Indent(&buffer, marsh, "", "\t")
+		buffer.WriteTo(out)
+		out.Close()
+
+	}
+
+	fmt.Println("end cache")
+
 }

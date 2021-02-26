@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 
 	"log"
+
+	"github.com/Akenaide/biri"
 )
 
 const yuyuteiURL = "https://yuyu-tei.jp/"
@@ -33,7 +35,9 @@ func (p *Prox) handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	proxy := New("http://localhost:8080")
+	proxy := New("http://localhost:8081")
+	biri.ProxyStart()
+	biri.Config.PingServer = "https://www.heartofthecards.com"
 
 	yytInfosData, yytErr := ioutil.ReadFile(filepath.Join("static", "yyt_infos.json"))
 	if yytErr != nil {
@@ -52,12 +56,13 @@ func main() {
 	http.HandleFunc("/views/estimateprice", estimatePrice)
 	http.HandleFunc("/views/searchcards", searchcards)
 	http.HandleFunc("/views/exportcockatrice", exportcockatrice)
+	http.HandleFunc("/views/cache", cache)
 
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, r.URL.Path[1:])
 	})
 
-	log.Print("Ready!")
+	log.Print("Ready at 8010!")
 	http.ListenAndServe(":8010", nil)
 
 }
