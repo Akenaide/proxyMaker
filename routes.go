@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -72,6 +73,7 @@ func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("getTranslationHotC")
 	var link = r.PostFormValue("url")
 	plugin, err := getPlugin(link)
+	var translations = []Card{}
 
 	if err != nil {
 		fmt.Println(err)
@@ -82,7 +84,26 @@ func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(errGetCardDeckInfo)
 	}
 
-	var translations = fetchTranslation(cardsInfo)
+	code := strings.Split(link, "/")
+	filename := filepath.Join(plugin.name(), code[len(code)-1]+".json")
+
+	if _, err := os.Stat(filename); err == nil {
+		jsonFile, err := os.Open(filename)
+
+		if err != nil {
+			fmt.Println("file error:", err)
+		}
+
+		defer jsonFile.Close()
+
+		bytesValue, _ := ioutil.ReadAll(jsonFile)
+
+		json.Unmarshal(bytesValue, &translations)
+
+	} else {
+		translations = fetchTranslation(cardsInfo)
+
+	}
 
 	b, err := json.Marshal(translations)
 	if err != nil {
@@ -235,7 +256,6 @@ func cache(w http.ResponseWriter, r *http.Request) {
 		os.MkdirAll(plugin.name(), 744)
 
 		if infoStat, err := os.Stat(filename); err == nil && r.URL.Query().Get("force") != "true" {
-			fmt.Println("force doko?")
 			isGoodEnough := time.Now().Sub(infoStat.ModTime()).Hours() < cacheTime.Hours()
 			if isGoodEnough {
 				fmt.Printf("USe cache %v for code: %v\n", infoStat.ModTime(), code)
