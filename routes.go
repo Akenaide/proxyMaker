@@ -13,7 +13,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/Akenaide/biri"
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -47,34 +46,11 @@ func getPlugin(url string) (plugin, error) {
 
 func fetchTranslation(cardsInfo []Card) []Card {
 	translations := []Card{}
-	respChan := make(chan respMap)
-	allCards := len(cardsInfo)
-	iter := 1
 
 	for _, card := range cardsInfo {
 		url := hoTcURL + card.ID + "&short=1"
 		fmt.Println(url)
-
-		go func(url string, card Card) {
-			for {
-				var proxy = biri.GetClient()
-
-				_resp, err := proxy.Client.Get(url)
-				if err != nil {
-					fmt.Println("proxy erro", err)
-					proxy.Ban()
-					continue
-				}
-				proxy.Readd()
-				respChan <- respMap{_resp, card}
-				break
-			}
-		}(url, card)
-	}
-
-	for respM := range respChan {
-
-		doc, err := goquery.NewDocumentFromResponse(respM.Resp)
+		doc, err := goquery.NewDocument(url)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -82,15 +58,11 @@ func fetchTranslation(cardsInfo []Card) []Card {
 		if err != nil {
 			fmt.Println(err)
 		}
-		respM.Card.Translation = html.UnescapeString(textHTML)
-		respM.Card.URL = yytMap[respM.Card.ID].URL
+		card.Translation = html.UnescapeString(textHTML)
+		card.URL = yytMap[card.ID].URL
 
-		translations = append(translations, respM.Card)
-		if iter < allCards {
-			iter = iter + 1
-		} else {
-			break
-		}
+		translations = append(translations, card)
+		time.Sleep(1 * time.Second)
 	}
 
 	return translations
