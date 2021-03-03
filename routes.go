@@ -90,7 +90,7 @@ func getTranslationHotC(w http.ResponseWriter, r *http.Request) {
 	}
 
 	code := strings.Split(link, "/")
-	filename := filepath.Join(plugin.name(), code[len(code)-1]+".json")
+	filename := filepath.Join("cache", plugin.name(), code[len(code)-1], "deck.json")
 
 	if _, err := os.Stat(filename); err == nil {
 		jsonFile, err := os.Open(filename)
