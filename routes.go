@@ -282,7 +282,8 @@ func cache(w http.ResponseWriter, r *http.Request) {
 		for i, card := range translation {
 			wg.Add(1)
 			imgPath := filepath.Join(folderpath, filepath.Base(card.URL))
-			newPath := filepath.Join("https://proxyMaker.moe", imgPath)
+			newPath := strings.Join([]string{"https://proxyMaker.naide.moe", imgPath}, "/")
+
 			fetchImgURL := string(card.URL)
 
 			translation[i].Translation = findHotCImg.ReplaceAllString(card.Translation, newPath)
