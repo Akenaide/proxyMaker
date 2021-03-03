@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
@@ -34,6 +37,8 @@ var cockatricCXMap = map[string]string{
 }
 
 const cacheTime = (time.Hour * 24) * 3
+
+var findHotCImg = regexp.MustCompile(`/heart(.*).png`)
 
 func getPlugin(url string) (plugin, error) {
 	for _, plugin := range plugins {
@@ -243,6 +248,7 @@ func searchcards(w http.ResponseWriter, r *http.Request) {
 func cache(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("cache")
 	var links = r.PostFormValue("decks")
+	var wg sync.WaitGroup
 
 	for _, link := range strings.Split(links, ",") {
 
@@ -252,8 +258,9 @@ func cache(w http.ResponseWriter, r *http.Request) {
 		}
 
 		code := strings.Split(link, "/")
-		filename := filepath.Join(plugin.name(), code[len(code)-1]+".json")
-		os.MkdirAll(plugin.name(), 744)
+		folderpath := filepath.Join("cache", plugin.name(), code[len(code)-1])
+		filename := filepath.Join(folderpath, "deck.json")
+		os.MkdirAll(folderpath, 744)
 
 		if infoStat, err := os.Stat(filename); err == nil && r.URL.Query().Get("force") != "true" {
 			isGoodEnough := time.Now().Sub(infoStat.ModTime()).Hours() < cacheTime.Hours()
@@ -271,6 +278,46 @@ func cache(w http.ResponseWriter, r *http.Request) {
 		var buffer bytes.Buffer
 
 		translation := fetchTranslation(cardsInfo)
+
+		for i, card := range translation {
+			wg.Add(1)
+			imgPath := filepath.Join(folderpath, filepath.Base(card.URL))
+			newPath := filepath.Join("https://proxyMaker.moe", imgPath)
+			fetchImgURL := string(card.URL)
+
+			translation[i].Translation = findHotCImg.ReplaceAllString(card.Translation, newPath)
+
+			go func(imgPath string, imgURL string) {
+				for {
+
+					out, err := os.Create(imgPath)
+					if err != nil {
+						time.Sleep(time.Second * 1)
+						continue
+					}
+
+					defer out.Close()
+					log.Println("get :", imgURL)
+					resp, err := http.Get(imgURL)
+					if err != nil {
+						log.Println("retry get : ", imgURL)
+						time.Sleep(time.Second * 1)
+						continue
+					}
+					defer resp.Body.Close()
+					io.Copy(out, resp.Body)
+					if err != nil {
+						time.Sleep(time.Second * 1)
+						continue
+					}
+
+					wg.Done()
+					break
+				}
+			}(imgPath, fetchImgURL)
+			translation[i].URL = newPath
+		}
+		wg.Wait()
 		marsh, err := json.Marshal(translation)
 
 		if err != nil {
