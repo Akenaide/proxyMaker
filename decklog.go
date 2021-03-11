@@ -61,7 +61,7 @@ func (e decklog) getCardDeckInfo(url string) ([]Card, error) {
 
 	for _, info := range decklogResp.Cards {
 		// card := Card{Amount: info.Amount, ID: info.CardID}
-		cardsDeck = append(cardsDeck, Card{Amount: info.Amount, ID: info.CardID})
+		cardsDeck = append(cardsDeck, Card{Amount: info.Amount, ID: strings.ToUpper(info.CardID)})
 	}
 
 	return cardsDeck, nil

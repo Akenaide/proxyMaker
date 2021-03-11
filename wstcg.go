@@ -34,7 +34,7 @@ func (e wstcg) getCardDecksInfoList(url string) ([][]Card, error) {
 			cardID := s.Find(".cardno").Text()
 			if cardID != "" {
 				var split = strings.Split(cardID, "-")
-				card.ID = fmt.Sprintf("%s%s%s", split[0], "-", strings.Replace(split[1], "E", "", 1))
+				card.ID = strings.ToUpper(fmt.Sprintf("%s%s%s", split[0], "-", strings.Replace(split[1], "E", "", 1)))
 			} else {
 				return
 			}

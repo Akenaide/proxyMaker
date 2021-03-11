@@ -75,7 +75,7 @@ func (e encoredecks) getCardDeckInfo(url string) ([]Card, error) {
 
 	for k, v := range encoreCompact(encoreCards.Cards) {
 		card := Card{}
-		card.ID = k
+		card.ID = strings.ToUpper(k)
 		card.Amount = v
 		cardsDeck = append(cardsDeck, card)
 	}
